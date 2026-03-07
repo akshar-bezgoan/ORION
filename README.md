@@ -43,24 +43,24 @@ A **Python GUI application** for simulating a 4-link planar robot arm. This simu
 ```bash
 git clone https://github.com/yourusername/robot-arm-simulator.git
 cd robot-arm-simulator
-
-	2.	Install dependencies (Python 3.8+ recommended):
-
+```
+2.	**Install dependencies** (Python 3.8+ recommended):
+```bash
 pip install numpy matplotlib scipy
-
+```
 Tkinter is usually included with Python on Windows and macOS. On Linux, you may need to install it separately:
-
+```bash
 sudo apt-get install python3-tk
-
+```
 
 ⸻
 
 Usage
 
 Run the main application:
-
+```bash
 python main.py
-
+```
 Main Menu
 	•	Forward Kinematics: Opens the FK simulator.
 	•	Inverse Kinematics: Opens the IK solver.
@@ -86,14 +86,7 @@ Robot Arm Details
 	•	4-Link Planar Robot Arm
 	•	Links: L1, L2, L3, L4
 	•	Joint angles: θ1 (fixed at 90°), θ2, θ3, θ4
-	•	Forward Kinematics Formula:
-
-[
-\begin{aligned}
-x &= L_1 \cos\theta_1 + L_2 \cos(\theta_1+\theta_2) + L_3 \cos(\theta_1+\theta_2+\theta_3) + L_4 \cos(\theta_1+\theta_2+\theta_3+\theta_4) \
-y &= L_1 \sin\theta_1 + L_2 \sin(\theta_1+\theta_2) + L_3 \sin(\theta_1+\theta_2+\theta_3) + L_4 \sin(\theta_1+\theta_2+\theta_3+\theta_4)
-\end{aligned}
-]
+	•	Forward Kinematics
 	•	Inverse Kinematics
 	•	Uses numerical optimization to minimize the Euclidean distance between the end-effector and target (x, y).
 	•	Multiple initial guesses are tested to find multiple valid solutions.
@@ -113,7 +106,6 @@ Dependencies
 
 Future Improvements
 	•	Add sliders for joint angles in FK mode for real-time interactive control.
-	•	Allow θ1 rotation (currently fixed at 90°) for full workspace exploration.
 	•	Add collision detection and workspace visualization.
 	•	Implement multiple end-effector targets and batch IK solving.
 	•	Add animation between FK and IK solutions.
