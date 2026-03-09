@@ -1,4 +1,4 @@
-# 4-Link Planar Robot Arm Simulator
+# 3-Link Planar Robot Arm Simulator
 
 A **Python GUI application** for simulating a 4-link planar robot arm. This simulator supports **forward kinematics (FK)**, **inverse kinematics (IK)**, and live visualization of the robot arm within the same window. It is ideal for learning, teaching, or experimenting with planar robotic arms.
 
@@ -7,14 +7,15 @@ A **Python GUI application** for simulating a 4-link planar robot arm. This simu
 ## Features
 
 - **Forward Kinematics (FK) Mode**  
-  - Input link lengths (`L1–L4`) and joint angles (`θ1–θ4`) to compute the end-effector `(x, y)` coordinates.
+  - Input link lengths (`L1–L3` + `L_Gripper`) and joint angles (`θ1–θ4`) to compute the end-effector `(x, y)` coordinates.
   - Visualizes the robot arm in real-time using an **embedded Matplotlib plot**.
   - Fixed θ1 = 90° to simplify the planar workspace.
   - Reset button to restore the arm to the home configuration.
 
 - **Inverse Kinematics (IK) Mode**  
-  - Input desired end-effector position `(x, y)` and link lengths (`L1–L4`).
+  - Input desired end-effector position `(x, y)` and link lengths (`L1–L3` + `L_Gripper`).
   - Computes multiple possible joint angle solutions (`θ2–θ4`) using **numerical optimization (SciPy's `minimize`)**.
+  - Uses a second method: with a given `φ` value, using a Jacobian inverse, finds possible join angle solutions.
   - Displays found solutions in a scrollable panel.
   - Load selected IK solution directly into the FK simulator for visualization.
 
