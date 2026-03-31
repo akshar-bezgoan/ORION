@@ -1,61 +1,79 @@
 <?xml version="1.0"?>
 <robot name="orion" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- ================= BASE LINK ================= -->
+  <xacro:property name="base_size" value="0.5 0.5 0.2"/>
+  <xacro:property name="shoulder_radius" value="0.2"/>
+  <xacro:property name="shoulder_length" value="0.5"/>
+  <xacro:property name="link1_radius" value="0.15"/>
+  <xacro:property name="link1_length" value="1.0"/>
+  <xacro:property name="base_mass" value="2.0"/>
+  <xacro:property name="shoulder_mass" value="1.0"/>
+  <xacro:property name="link1_mass" value="1.0"/>
+
   <link name="base_link">
-    <visual>
-      <geometry>
-        <box size="0.5 0.5 0.2"/>
-      </geometry>
-
-      <material name="blue">
-        <color rgba="0 0 1 1"/>
-      </material>
-    </visual>
-  </link>
-
-  <!-- ================= SHOULDER LINK ================= -->
-  <link name="shoulder_link">
-
     <inertial>
-      <!-- Keep inertial at the link origin (IMPORTANT) -->
       <origin xyz="0 0 0" rpy="0 0 0"/>
-
-      <mass value="1"/>
-
-      <!-- Inertia tensor must be relative to COM, not world -->
-      <inertia
-        ixx="0.05"
-        iyy="0.05"
-        izz="0.06"
-        ixy="0.0"
-        ixz="0.0"
-        iyz="0.0"/> 
+      <mass value="${base_mass}"/>
+      <inertia ixx="0.08" iyy="0.08" izz="0.08" ixy="0.0" ixz="0.0" iyz="0.0"/>
     </inertial>
-
     <visual>
-      <origin xyz="0 0 0.25" rpy="0 0 0"/>
-
-      <geometry>
-        <cylinder radius="0.2" length="0.5"/>
-      </geometry>
-
-      <material name="cyan">
-        <color rgba="0 1.0 1.0 1.0"/>
-      </material>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="${base_size}"/></geometry>
+      <material name="blue"><color rgba="0 0 1 1"/></material>
     </visual>
-
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="${base_size}"/></geometry>
+    </collision>
   </link>
 
-  <!-- ================= JOINT ================= -->
+  <link name="shoulder_link">
+    <inertial>
+      <origin xyz="0 0 ${shoulder_length/2}" rpy="0 0 0"/>
+      <mass value="${shoulder_mass}"/>
+      <inertia ixx="0.02" iyy="0.02" izz="0.02" ixy="0.0" ixz="0.0" iyz="0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 ${shoulder_length/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${shoulder_radius}" length="${shoulder_length}"/></geometry>
+      <material name="cyan"><color rgba="0 1 1 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${shoulder_length/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${shoulder_radius}" length="${shoulder_length}"/></geometry>
+    </collision>
+  </link>
+
   <joint name="shoulder_joint" type="continuous">
     <parent link="base_link"/>
     <child link="shoulder_link"/>
-
-    <!-- Joint is at top of base -->
-    <origin xyz="0 0 0.2" rpy="0 0 0"/>
-
+    <origin xyz="0 0 0.1" rpy="0 0 0"/>
     <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="link1">
+    <inertial>
+      <origin xyz="0 0 ${link1_length/2}" rpy="0 0 0"/>
+      <mass value="${link1_mass}"/>
+      <inertia ixx="0.02" iyy="0.02" izz="0.02" ixy="0.0" ixz="0.0" iyz="0.0"/>
+    </inertial>
+    <visual>
+      <origin xyz="0 0 ${link1_length/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${link1_radius}" length="${link1_length}"/></geometry>
+      <material name="cyan"><color rgba="0 1 1 1"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 ${link1_length/2}" rpy="0 0 0"/>
+      <geometry><cylinder radius="${link1_radius}" length="${link1_length}"/></geometry>
+    </collision>
+  </link>
+
+  <joint name="shoulder_to_link1_joint" type="revolute">
+    <parent link="shoulder_link"/>
+    <child link="link1"/>
+    <origin xyz="0 0 ${shoulder_length}" rpy="0 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit lower="-1.57" upper="1.57" effort="10" velocity="1.0"/>
   </joint>
 
 </robot>
