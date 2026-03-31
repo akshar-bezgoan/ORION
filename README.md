@@ -1,6 +1,6 @@
 # ORION
 
-A repository containing various computing projects and practice exercises, including robotics simulation and C++ practice work.
+This repository is the area to store the files for the ORION project. It currently includes an IK simulator and some brief C++ practice.
 
 ---
 
