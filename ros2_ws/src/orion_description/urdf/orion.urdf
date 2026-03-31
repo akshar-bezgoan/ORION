@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<robot name="orion">
+
+  <link name="base_link"> <!--TODO: ADD INERTIAL ELEMENTS TO THIS-->
+
+    <visual>
+      <geometry>
+        <box size="0.5 0.5 0.2"/>
+      </geometry>
+
+      <material name="blue">
+        <color rgba="0 0 1 1"/>
+      </material>
+    </visual>
+
+  </link>
+
+  <link name="shoulder_link"/> <!--TODO: <mass>, <inertia> tags need to be changed once Shriram has done the maths for it-->
+
+    <inertial>
+      <origin xyz="0.25 0.25 0.2" rpy="0 0 0"/>
+      <mass value="1"/> 
+      <inertia ixx="0.05067488516" iyy="0.05067488516" izz="0.05968310366" ixy="0.0" ixz="0.0" iyz="0.0" />
+    </inertial>
+
+    <visual>
+      <origin xyz="0.25 0.25 0.2" rpy="0 0 0"/>
+      <geometry>
+        <cylinder radius="0.3454941495" length="0.5"/>
+      <geometry/>
+      <material name="cyan">
+        <color rgba="0 1.0 1.0 1.0"/>
+      </material>
+    </visual>
+
+    <!--The shoulder link shouldn't be colliding (ideally) so I am omitting the optional <collision> tags-->
+
+
+</robot>

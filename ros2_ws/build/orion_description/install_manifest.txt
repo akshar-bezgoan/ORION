@@ -1,0 +1,15 @@
+/home/akkibez/ros2_ws/install/orion_description/share/ament_index/resource_index/package_run_dependencies/orion_description
+/home/akkibez/ros2_ws/install/orion_description/share/ament_index/resource_index/parent_prefix_path/orion_description
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/environment/ament_prefix_path.sh
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/environment/ament_prefix_path.dsv
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/environment/path.sh
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/environment/path.dsv
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/local_setup.bash
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/local_setup.sh
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/local_setup.zsh
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/local_setup.dsv
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/package.dsv
+/home/akkibez/ros2_ws/install/orion_description/share/ament_index/resource_index/packages/orion_description
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/cmake/orion_descriptionConfig.cmake
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/cmake/orion_descriptionConfig-version.cmake
+/home/akkibez/ros2_ws/install/orion_description/share/orion_description/package.xml
