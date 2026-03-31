@@ -8,12 +8,13 @@ This repository is the area to store the files for the ORION project. It include
 
 ```
 ORION/
-├── ros2_ws/                    # ROS 2 Workspace
+├── orion_ws/                    # ROS 2 Workspace
 │   ├── src/
 │   │   └── orion_description/  # Robot URDF and mesh descriptions
 │   │       ├── urdf/
 │   │       │   ├── orion.urdf           # URDF robot model
-│   │       │   └── orion.urdf.xacro    # Xacro parameterized model
+│   │       ├── xacro/
+│   │       │   └── orion.xacro         # Xacro parameterized model
 │   │       ├── meshes/                  # 3D mesh files
 │   │       ├── launch/                  # ROS 2 launch files
 │   │       ├── CMakeLists.txt
@@ -51,14 +52,14 @@ A ROS 2 workspace containing the ORION robot description package with URDF model
 
 **Usage (after building):**
 ```bash
-cd ros2_ws
+cd orion_ws
 source install/setup.bash
 ros2 launch orion_description <launch_file>
 ```
 
 **Building the workspace:**
 ```bash
-cd ros2_ws
+cd orion_ws
 colcon build
 ```
 
@@ -127,7 +128,7 @@ source /opt/ros/<distro>/setup.bash
 
 3. Build the ROS 2 workspace:
 ```bash
-cd ros2_ws
+cd orion_ws
 colcon build
 source install/setup.bash
 ```
@@ -149,7 +150,7 @@ clang -o main main.cpp
 
 | Project | Type | Description |
 |---------|------|-------------|
-| ros2_ws | ROS 2 | Robot URDF model and ROS 2 description package |
+| orion_ws | ROS 2 | Robot URDF model and ROS 2 description package |
 | CPP Practice | C++ | Basic circle area calculator program |
 | Simulation | Python | 4-link planar robot arm simulator with FK/IK |
 
