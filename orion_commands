@@ -1,0 +1,8 @@
+  orion_dev     - Fast rebuild and launch (use after xacro changes)
+  orion_full    - Complete rebuild and launch
+  orion_build   - Just build the package
+  orion_launch  - Just launch RViz2
+  orion_ws      - Navigate to workspace
+  orion_xacro   - Edit xacro file
+  orion_launch_edit - Edit launch file
+
