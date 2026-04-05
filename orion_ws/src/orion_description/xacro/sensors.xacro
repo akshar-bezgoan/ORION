@@ -1,26 +1,6 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- ================================================================
-       ORION SENSORS  —  LiDAR on rear mast
-         Max arm height above base_link (worst case — arm straight up):
-           shoulder mount  :  base_z/2 + arm_mount_h  = 0.0525 + 0.024  = 0.0765 m
-           shoulder riser  :  + 0.055                                    = 0.1315 m
-           upper_arm       :  + 0.150  (pointing straight up)            = 0.2815 m
-           forearm         :  + 0.120                                    = 0.4015 m
-
-         LiDAR scan plane must be above 0.40 m above base_link.
-         Mast height chosen so scan plane clears arm with 50 mm margin:
-           mast_h = 0.25 m  →  scan plane at base_z/2 + mast_h + lidar_h
-                             = 0.0525 + 0.25 + 0.041  ≈  0.344 m  ... insufficient
-
-         Use mast_h = 0.36 m:
-           scan plane  ≈  0.0525 + 0.36 + 0.041  =  0.454 m  ✓ (50 mm clear)
-
-         Mast is mounted at the rear of the base (x = −0.10 m) so it is
-         well behind the arm mount (x = 0) and does not obstruct the scan.
-       ================================================================ -->
-
   <xacro:property name="base_z"    value="0.105"/>
 
   <!-- Mast -->
