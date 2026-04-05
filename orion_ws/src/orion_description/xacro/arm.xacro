@@ -1,0 +1,264 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ================================================================
+       ORION ARM  —  3-DOF planar arm + 2-finger gripper
+         All rotation axes are Y (pitch), giving a fully planar arm.
+         Yaw is provided by the mecanum base — no shoulder yaw joint.
+
+         Kinematic chain:
+           base_link
+             └─ shoulder_joint    (pitch Y) → shoulder_link
+                  └─ elbow_joint      (pitch Y) → upper_arm_link
+                       └─ wrist_joint     (pitch Y) → forearm_link
+                            └─ wrist_roll_joint (roll X) → hand_link
+                                 └─ gripper_base_joint (fixed)
+                                      ├─ gripper_left_joint  (prismatic +Y)
+                                      └─ gripper_right_joint (prismatic -Y)
+       ================================================================ -->
+
+  <xacro:property name="base_z"        value="0.105"/>
+  <xacro:property name="arm_mount_h"   value="0.024"/>
+
+  <xacro:property name="shoulder_h"    value="0.055"/>
+  <xacro:property name="upper_arm_l"   value="0.150"/>
+  <xacro:property name="forearm_l"     value="0.120"/>
+  <xacro:property name="hand_l"        value="0.055"/>
+
+  <xacro:property name="r0"  value="0.020"/>
+  <xacro:property name="r1"  value="0.018"/>
+  <xacro:property name="r2"  value="0.015"/>
+  <xacro:property name="r3"  value="0.012"/>
+
+  <xacro:property name="m_shoulder"   value="0.30"/>
+  <xacro:property name="m_upper_arm"  value="0.24"/>
+  <xacro:property name="m_forearm"    value="0.18"/>
+  <xacro:property name="m_hand"       value="0.10"/>
+  <xacro:property name="m_gripper"    value="0.12"/>
+
+  <xacro:macro name="inertia_cyl_z" params="m r l">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 ${l/2.0}" rpy="0 0 0"/>
+      <inertia
+        ixx="${(1.0/12.0)*m*(3.0*r*r + l*l)}"
+        iyy="${(1.0/12.0)*m*(3.0*r*r + l*l)}"
+        izz="${0.5*m*r*r}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="inertia_cyl_x" params="m r l">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="${l/2.0} 0 0" rpy="0 0 0"/>
+      <inertia
+        ixx="${0.5*m*r*r}"
+        iyy="${(1.0/12.0)*m*(3.0*r*r + l*l)}"
+        izz="${(1.0/12.0)*m*(3.0*r*r + l*l)}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="inertia_box" params="m x y z ox oy oz">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="${ox} ${oy} ${oz}" rpy="0 0 0"/>
+      <inertia
+        ixx="${(1.0/12.0)*m*(y*y+z*z)}"
+        iyy="${(1.0/12.0)*m*(x*x+z*z)}"
+        izz="${(1.0/12.0)*m*(x*x+y*y)}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="arm">
+
+    <!-- ── 1. Shoulder link (vertical riser) ─────────────────────── -->
+    <link name="shoulder_link">
+      <visual>
+        <origin xyz="0 0 ${shoulder_h/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${r0}" length="${shoulder_h}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <visual>
+        <origin xyz="0 0 0.010" rpy="0 0 0"/>
+        <geometry><cylinder radius="${r0*1.9}" length="0.020"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${shoulder_h/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${r0}" length="${shoulder_h}"/></geometry>
+      </collision>
+      <xacro:inertia_cyl_z m="${m_shoulder}" r="${r0}" l="${shoulder_h}"/>
+    </link>
+
+    <!-- base_link → shoulder  ── PITCH (Y)  ─────────────────────── -->
+    <!-- No yaw: the mecanum base handles in-place rotation entirely.  -->
+    <joint name="shoulder_joint" type="continuous">
+      <parent link="base_link"/>
+      <child  link="shoulder_link"/>
+      <origin xyz="0 0 ${base_z/2.0 + arm_mount_h}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.08" friction="0.10"/>
+    </joint>
+
+    <!-- ── 2. Upper arm (along X) ─────────────────────────────────── -->
+    <link name="upper_arm_link">
+      <visual>
+        <origin xyz="${upper_arm_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r1}" length="${upper_arm_l}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <visual>
+        <origin xyz="${upper_arm_l} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r1*1.7}" length="0.018"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="${upper_arm_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r1}" length="${upper_arm_l}"/></geometry>
+      </collision>
+      <xacro:inertia_cyl_x m="${m_upper_arm}" r="${r1}" l="${upper_arm_l}"/>
+    </link>
+
+    <!-- shoulder → upper_arm  ── PITCH (Y) ──────────────────────── -->
+    <joint name="elbow_joint" type="continuous">
+      <parent link="shoulder_link"/>
+      <child  link="upper_arm_link"/>
+      <origin xyz="0 0 ${shoulder_h}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.06" friction="0.08"/>
+    </joint>
+
+    <!-- ── 3. Forearm (along X) ───────────────────────────────────── -->
+    <link name="forearm_link">
+      <visual>
+        <origin xyz="${forearm_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r2}" length="${forearm_l}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <visual>
+        <origin xyz="${forearm_l} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r2*1.6}" length="0.015"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="${forearm_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r2}" length="${forearm_l}"/></geometry>
+      </collision>
+      <xacro:inertia_cyl_x m="${m_forearm}" r="${r2}" l="${forearm_l}"/>
+    </link>
+
+    <!-- upper_arm → forearm  ── PITCH (Y) ───────────────────────── -->
+    <joint name="wrist_joint" type="continuous">
+      <parent link="upper_arm_link"/>
+      <child  link="forearm_link"/>
+      <origin xyz="${upper_arm_l} 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.04" friction="0.06"/>
+    </joint>
+
+    <!-- ── 4. Hand / tool mount (along X) ────────────────────────── -->
+    <link name="hand_link">
+      <visual>
+        <origin xyz="${hand_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r3}" length="${hand_l}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="${hand_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r3}" length="${hand_l}"/></geometry>
+      </collision>
+      <xacro:inertia_cyl_x m="${m_hand}" r="${r3}" l="${hand_l}"/>
+    </link>
+
+    <!-- forearm → hand  ── ROLL (X) ─────────────────────────────── -->
+    <joint name="wrist_roll_joint" type="continuous">
+      <parent link="forearm_link"/>
+      <child  link="hand_link"/>
+      <origin xyz="${forearm_l} 0 0" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <dynamics damping="0.02" friction="0.03"/>
+    </joint>
+
+    <!-- ── 5. Gripper base ────────────────────────────────────────── -->
+    <link name="gripper_base_link">
+      <visual>
+        <origin xyz="0.018 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.028 0.052 0.018"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0.018 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.028 0.052 0.018"/></geometry>
+      </collision>
+      <xacro:inertia_box m="${m_gripper*0.5}" x="0.028" y="0.052" z="0.018"
+                         ox="0.018" oy="0" oz="0"/>
+    </link>
+
+    <joint name="gripper_base_joint" type="fixed">
+      <parent link="hand_link"/>
+      <child  link="gripper_base_link"/>
+      <origin xyz="${hand_l} 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- ── 6. Left finger ─────────────────────────────────────────── -->
+    <link name="gripper_left_link">
+      <visual>
+        <origin xyz="0.022 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.044 0.009 0.014"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0.022 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.044 0.009 0.014"/></geometry>
+      </collision>
+      <xacro:inertia_box m="${m_gripper*0.25}" x="0.044" y="0.009" z="0.014"
+                         ox="0.022" oy="0" oz="0"/>
+    </link>
+
+    <joint name="gripper_left_joint" type="prismatic">
+      <parent link="gripper_base_link"/>
+      <child  link="gripper_left_link"/>
+      <origin xyz="0 0.022 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="0.025" effort="5.0" velocity="0.10"/>
+      <dynamics damping="0.01" friction="0.01"/>
+    </joint>
+
+    <!-- ── 7. Right finger ────────────────────────────────────────── -->
+    <link name="gripper_right_link">
+      <visual>
+        <origin xyz="0.022 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.044 0.009 0.014"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0.022 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.044 0.009 0.014"/></geometry>
+      </collision>
+      <xacro:inertia_box m="${m_gripper*0.25}" x="0.044" y="0.009" z="0.014"
+                         ox="0.022" oy="0" oz="0"/>
+    </link>
+
+    <joint name="gripper_right_joint" type="prismatic">
+      <parent link="gripper_base_link"/>
+      <child  link="gripper_right_link"/>
+      <origin xyz="0 -0.022 0" rpy="0 0 0"/>
+      <axis xyz="0 -1 0"/>
+      <limit lower="0.0" upper="0.025" effort="5.0" velocity="0.10"/>
+      <dynamics damping="0.01" friction="0.01"/>
+    </joint>
+
+    <!-- ── TCP ────────────────────────────────────────────────────── -->
+    <link name="tcp_link"/>
+    <joint name="tcp_joint" type="fixed">
+      <parent link="gripper_base_link"/>
+      <child  link="tcp_link"/>
+      <origin xyz="0.050 0 0" rpy="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+
+</robot>

@@ -4,17 +4,18 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.substitutions import Command
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
 
     pkg_path = get_package_share_directory('orion_description')
-
-    # ✅ Correct path to your xacro
     xacro_file = os.path.join(pkg_path, 'xacro', 'orion.xacro')
 
-    # ✅ Proper ROS2 way: evaluate at launch time
-    robot_description = Command(['xacro ', xacro_file])
+    robot_description = ParameterValue(
+        Command('xacro ' + xacro_file),
+        value_type=str
+    )
 
     return LaunchDescription([
 
@@ -29,15 +30,15 @@ def generate_launch_description():
         ),
 
         Node(
-            package='rviz2',
-            executable='rviz2',
+            package='joint_state_publisher_gui',
+            executable='joint_state_publisher_gui',
             output='screen'
         ),
 
         Node(
-            package='joint_state_publisher_gui',
-            executable='joint_state_publisher_gui',
+            package='rviz2',
+            executable='rviz2',
             output='screen'
-        )
+        ),
 
     ])
