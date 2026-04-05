@@ -1,1 +1,0 @@
-/home/akkibez/Documents/ORION/orion_ws/build/orion_description/ament_cmake_environment_hooks/local_setup.sh
