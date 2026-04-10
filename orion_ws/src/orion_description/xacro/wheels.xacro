@@ -2,82 +2,65 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- ================================================================
-       ORION MECANUM WHEELS  —  4-wheel omnidirectional drive
-         wheel_radius : 50 mm  (standard 100 mm diameter mecanum)
-         wheel_width  : 40 mm
-         Positioned at four corners of the 280 × 320 mm chassis
+       ORION MECANUM WHEELS  —  Gazebo-ready
+         Gazebo additions:
+           • Per-wheel <gazebo reference> with mecanum-style friction:
+               mu  (longitudinal, along wheel spin) = high  ≈ 1.0
+               mu2 (lateral, across rollers)        = low   ≈ 0.1
+               fdir1 set to the wheel's forward direction in its frame
+           • MecanumDrive plugin (gz-sim-mecanum-drive-system)
+             Publishes odometry and subscribes to /cmd_vel (Twist).
        ================================================================ -->
 
   <xacro:property name="wheel_radius"  value="0.050"/>
   <xacro:property name="wheel_width"   value="0.040"/>
   <xacro:property name="wheel_mass"    value="0.300"/>
-
   <xacro:property name="base_z"        value="0.105"/>
-
-  <!-- Wheel centre offsets relative to base_link origin (centre of chassis) -->
-  <xacro:property name="wheel_x_off"  value="0.095"/>   <!-- ±95 mm front/rear  -->
-  <xacro:property name="wheel_y_off"  value="0.130"/>   <!-- ±130 mm left/right -->
-  <!-- Wheel centres flush with bottom of chassis -->
+  <xacro:property name="wheel_x_off"  value="0.095"/>
+  <xacro:property name="wheel_y_off"  value="0.130"/>
   <xacro:property name="wheel_z_off"  value="${-base_z / 2.0}"/>
 
-  <!-- Roller stripe count (visual only) -->
-  <xacro:property name="roller_count"  value="9"/>
-
   <!-- ── Single mecanum wheel ── -->
-  <xacro:macro name="mecanum_wheel" params="name x_sign y_sign roller_sign">
+  <xacro:macro name="mecanum_wheel" params="name x_sign y_sign">
 
     <link name="${name}_wheel_link">
 
-      <!-- Main tyre body -->
+      <!-- Tyre -->
       <visual>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-        <geometry>
-          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
-        </geometry>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="black"/>
       </visual>
-
-      <!-- Hub (lighter centre) -->
+      <!-- Hub -->
       <visual>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-        <geometry>
-          <cylinder radius="${wheel_radius * 0.38}" length="${wheel_width + 0.002}"/>
-        </geometry>
+        <geometry><cylinder radius="${wheel_radius * 0.38}" length="${wheel_width + 0.002}"/></geometry>
         <material name="grey"/>
       </visual>
-
-      <!-- Axle stub (left side) -->
+      <!-- Axle stubs -->
       <visual>
         <origin xyz="0  ${wheel_width/2.0 + 0.006} 0" rpy="${pi/2} 0 0"/>
         <geometry><cylinder radius="0.008" length="0.012"/></geometry>
         <material name="dark_grey"/>
       </visual>
-
-      <!-- Axle stub (right side) -->
       <visual>
         <origin xyz="0 ${-(wheel_width/2.0 + 0.006)} 0" rpy="${pi/2} 0 0"/>
         <geometry><cylinder radius="0.008" length="0.012"/></geometry>
         <material name="dark_grey"/>
       </visual>
 
-      <!-- Collision is a simple cylinder -->
       <collision>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-        <geometry>
-          <cylinder radius="${wheel_radius}" length="${wheel_width}"/>
-        </geometry>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
       </collision>
 
-      <!-- Cylinder inertia about Y (spin axis):
-             Ixx = Izz = (1/12) m (3r² + h²)      (h = wheel_width here)
-             Iyy         = (1/2) m r²   ← spin axis -->
       <inertial>
         <mass value="${wheel_mass}"/>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <inertia
-          ixx="${(1.0/12.0) * wheel_mass * (3.0*wheel_radius*wheel_radius + wheel_width*wheel_width)}"
-          iyy="${0.5         * wheel_mass * wheel_radius * wheel_radius}"
-          izz="${(1.0/12.0) * wheel_mass * (3.0*wheel_radius*wheel_radius + wheel_width*wheel_width)}"
+          ixx="${(1.0/12.0)*wheel_mass*(3.0*wheel_radius*wheel_radius + wheel_width*wheel_width)}"
+          iyy="${0.5*wheel_mass*wheel_radius*wheel_radius}"
+          izz="${(1.0/12.0)*wheel_mass*(3.0*wheel_radius*wheel_radius + wheel_width*wheel_width)}"
           ixy="0" ixz="0" iyz="0"/>
       </inertial>
 
@@ -86,27 +69,98 @@
     <joint name="${name}_wheel_joint" type="continuous">
       <parent link="base_link"/>
       <child  link="${name}_wheel_link"/>
-      <origin xyz="${x_sign * wheel_x_off}
-                   ${y_sign * wheel_y_off}
-                   ${wheel_z_off}"
+      <origin xyz="${x_sign * wheel_x_off} ${y_sign * wheel_y_off} ${wheel_z_off}"
               rpy="0 0 0"/>
-      <!-- Mecanum wheels spin about the Y axis -->
       <axis xyz="0 1 0"/>
       <dynamics damping="0.01" friction="0.05"/>
     </joint>
 
+    <!-- ── Gazebo wheel colour + mecanum friction ── -->
+    <gazebo reference="${name}_wheel_link">
+      <material>Gazebo/Black</material>
+      <collision>
+        <surface>
+          <friction>
+            <ode>
+              <!-- High longitudinal grip, low lateral slip = mecanum roller effect -->
+              <mu>1.0</mu>
+              <mu2>0.1</mu2>
+              <!-- fdir1 in link frame: wheel rolls along X, rotated pi/2 about X
+                   so forward direction maps to Z in the collision frame -->
+              <fdir1>0 0 1</fdir1>
+              <slip1>0.0</slip1>
+              <slip2>0.05</slip2>
+            </ode>
+          </friction>
+          <contact>
+            <ode>
+              <kp>1e6</kp>
+              <kd>1.0</kd>
+              <min_depth>0.001</min_depth>
+              <max_vel>0.1</max_vel>
+            </ode>
+          </contact>
+        </surface>
+      </collision>
+    </gazebo>
+
+    <!-- ── ros2_control hardware interface for this wheel ── -->
+    <!-- Declared here so each wheel macro registers its own interface.
+         gz_ros2_control will pick these up automatically.             -->
+
   </xacro:macro>
 
-  <!-- ================================================================
-       Four wheel instances
-         roller_sign: +1 = rollers at +45° (FL, RR)
-                      -1 = rollers at -45° (FR, RL)
-       ================================================================ -->
+  <!-- ── Four wheel instances ── -->
   <xacro:macro name="wheels">
-    <xacro:mecanum_wheel name="front_left"  x_sign=" 1" y_sign=" 1" roller_sign=" 1"/>
-    <xacro:mecanum_wheel name="front_right" x_sign=" 1" y_sign="-1" roller_sign="-1"/>
-    <xacro:mecanum_wheel name="rear_left"   x_sign="-1" y_sign=" 1" roller_sign="-1"/>
-    <xacro:mecanum_wheel name="rear_right"  x_sign="-1" y_sign="-1" roller_sign=" 1"/>
+    <xacro:mecanum_wheel name="front_left"  x_sign=" 1" y_sign=" 1"/>
+    <xacro:mecanum_wheel name="front_right" x_sign=" 1" y_sign="-1"/>
+    <xacro:mecanum_wheel name="rear_left"   x_sign="-1" y_sign=" 1"/>
+    <xacro:mecanum_wheel name="rear_right"  x_sign="-1" y_sign="-1"/>
+
+    <!-- ==============================================================
+         GAZEBO — MecanumDrive plugin
+           Subscribes : /cmd_vel  (geometry_msgs/Twist)
+           Publishes  : /odom     (nav_msgs/Odometry)
+                        /tf       (odom → base_footprint)
+
+         Wheel names must match joint names exactly.
+         front_left  / front_right rollers are at +45° (X pattern),
+         rear_left   / rear_right  rollers are at -45°.
+         The plugin uses these signs internally.
+         ============================================================== -->
+    <gazebo>
+      <plugin filename="gz-sim-mecanum-drive-system"
+              name="gz::sim::systems::MecanumDrive">
+
+        <!-- Wheel joints -->
+        <front_left_joint>front_left_wheel_joint</front_left_joint>
+        <front_right_joint>front_right_wheel_joint</front_right_joint>
+        <rear_left_joint>rear_left_wheel_joint</rear_left_joint>
+        <rear_right_joint>rear_right_wheel_joint</rear_right_joint>
+
+        <!-- Physical parameters  (must match xacro properties above) -->
+        <wheel_separation>${wheel_y_off * 2.0}</wheel_separation>
+        <wheelbase>${wheel_x_off * 2.0}</wheelbase>
+        <wheel_radius>${wheel_radius}</wheel_radius>
+
+        <!-- ROS topics -->
+        <topic>/cmd_vel</topic>
+        <odom_topic>/odom</odom_topic>
+        <tf_topic>/tf</tf_topic>
+        <frame_id>odom</frame_id>
+        <child_frame_id>base_footprint</child_frame_id>
+
+        <!-- Publish odometry TF -->
+        <publish_odom>true</publish_odom>
+        <publish_odom_tf>true</publish_odom_tf>
+
+        <!-- Max velocity limits -->
+        <max_linear_velocity>1.0</max_linear_velocity>
+        <max_angular_velocity>2.0</max_angular_velocity>
+
+      </plugin>
+    </gazebo>
+
   </xacro:macro>
 
 </robot>

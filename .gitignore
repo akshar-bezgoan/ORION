@@ -1,0 +1,12 @@
+# VSCode
+**/.vscode/
+*.code-workspace
+
+# ROS2
+orion_ws/build/
+orion_ws/install/
+orion_ws/log/
+
+# GENERAL
+.DS_Store
+

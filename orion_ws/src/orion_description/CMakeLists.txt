@@ -30,5 +30,7 @@ install(
     urdf
     xacro
     launch
+    config
   DESTINATION share/${PROJECT_NAME}
 )
+

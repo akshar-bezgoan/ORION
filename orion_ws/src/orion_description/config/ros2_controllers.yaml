@@ -1,0 +1,56 @@
+# ============================================================
+# ORION ros2_controllers.yaml
+#
+# Rule: controller_manager/ros__parameters only declares
+#       controller names + types.
+#       Each controller's OWN params live at the TOP LEVEL
+#       under its own name, inside ros__parameters.
+# ============================================================
+
+controller_manager:
+  ros__parameters:
+    update_rate: 100  # Hz
+
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+    gripper_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+
+# ── Arm controller (shoulder, elbow, wrist, wrist_roll) ─────────────
+arm_controller:
+  ros__parameters:
+    joints:
+      - shoulder_joint
+      - elbow_joint
+      - wrist_joint
+      - wrist_roll_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 0.0
+
+# ── Gripper controller (left + right finger) ───────────────────────
+gripper_controller:
+  ros__parameters:
+    joints:
+      - gripper_left_joint
+      - gripper_right_joint
+    command_interfaces:
+      - position
+    state_interfaces:
+      - position
+      - velocity
+    state_publish_rate: 50.0
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: true

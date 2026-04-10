@@ -2,25 +2,23 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <!-- ================================================================
-       ORION BASE  —  Model 2 dimensions
-         280 mm (x, front-back)  ×  320 mm (y, left-right)  ×  105 mm (z)
-       Layered internals: Battery → Drivers → Power/ESP32 → Pi5 → Top plate
+       ORION BASE  —  Gazebo-ready
+         Gazebo additions:
+           • <gazebo reference> surface/friction for base_link
+           • Gazebo material colours
+           • gz_ros2_control + JointStateBroadcaster plugin
        ================================================================ -->
 
   <xacro:property name="base_x"     value="0.280"/>
   <xacro:property name="base_y"     value="0.320"/>
   <xacro:property name="base_z"     value="0.105"/>
   <xacro:property name="base_mass"  value="3.5"/>
-
-  <!-- Wheel params needed to compute base_link height above ground -->
   <xacro:property name="wheel_radius" value="0.050"/>
-
-  <!-- base_link sits at wheel_radius + half chassis height above the ground -->
-  <xacro:property name="base_link_z" value="${wheel_radius + base_z / 2.0}"/>
+  <xacro:property name="base_link_z"  value="${wheel_radius + base_z / 2.0}"/>
 
   <xacro:macro name="base">
 
-    <!-- ── Ground reference frame (no geometry / no inertia) ── -->
+    <!-- ── Ground reference frame ──────────────────────────────── -->
     <link name="base_footprint"/>
 
     <joint name="base_footprint_joint" type="fixed">
@@ -29,7 +27,7 @@
       <origin xyz="0 0 ${base_link_z}" rpy="0 0 0"/>
     </joint>
 
-    <!-- ── Main chassis ── -->
+    <!-- ── Main chassis ─────────────────────────────────────────── -->
     <link name="base_link">
 
       <!-- Outer shell -->
@@ -38,50 +36,43 @@
         <geometry><box size="${base_x} ${base_y} ${base_z}"/></geometry>
         <material name="dark_grey"/>
       </visual>
-
-      <!-- Top plate (slightly proud) -->
+      <!-- Top plate -->
       <visual>
         <origin xyz="0 0 ${base_z/2.0 - 0.004}" rpy="0 0 0"/>
         <geometry><box size="${base_x - 0.006} ${base_y - 0.006} 0.006"/></geometry>
         <material name="grey"/>
       </visual>
-
-      <!-- Layer 1 – Battery (bottom, tallest) -->
+      <!-- Battery layer -->
       <visual>
         <origin xyz="0 0 ${-base_z/2.0 + 0.0175}" rpy="0 0 0"/>
         <geometry><box size="${base_x - 0.020} ${base_y - 0.030} 0.033"/></geometry>
         <material name="black"/>
       </visual>
-
-      <!-- Layer 2 – Motor Drivers -->
+      <!-- Motor driver layer -->
       <visual>
         <origin xyz="-0.04 0 ${-base_z/2.0 + 0.048}" rpy="0 0 0"/>
         <geometry><box size="${base_x*0.45} ${base_y - 0.030} 0.018"/></geometry>
         <material name="dark_grey"/>
       </visual>
-
-      <!-- Layer 3 – Power distribution + ESP32 -->
+      <!-- Power + ESP32 layer -->
       <visual>
         <origin xyz="0 0 ${-base_z/2.0 + 0.068}" rpy="0 0 0"/>
         <geometry><box size="${base_x - 0.020} ${base_y - 0.030} 0.016"/></geometry>
         <material name="dark_grey"/>
       </visual>
-
-      <!-- Layer 4 – Raspberry Pi 5 (green PCB) -->
+      <!-- Raspberry Pi 5 PCB -->
       <visual>
         <origin xyz="-0.03 0.03 ${-base_z/2.0 + 0.088}" rpy="0 0 0"/>
         <geometry><box size="0.085 0.056 0.004"/></geometry>
         <material name="green"/>
       </visual>
-
-      <!-- Arm mount boss on top-centre -->
+      <!-- Arm mount boss -->
       <visual>
         <origin xyz="0.0 0.0 ${base_z/2.0 + 0.012}" rpy="0 0 0"/>
         <geometry><cylinder radius="0.032" length="0.024"/></geometry>
         <material name="black"/>
       </visual>
 
-      <!-- Collision uses the full bounding box only -->
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry><box size="${base_x} ${base_y} ${base_z}"/></geometry>
@@ -90,15 +81,60 @@
       <inertial>
         <mass value="${base_mass}"/>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <!-- Box inertia  I = (1/12) m (a² + b²) -->
         <inertia
-          ixx="${(1.0/12.0) * base_mass * (base_y*base_y + base_z*base_z)}"
-          iyy="${(1.0/12.0) * base_mass * (base_x*base_x + base_z*base_z)}"
-          izz="${(1.0/12.0) * base_mass * (base_x*base_x + base_y*base_y)}"
+          ixx="${(1.0/12.0)*base_mass*(base_y*base_y + base_z*base_z)}"
+          iyy="${(1.0/12.0)*base_mass*(base_x*base_x + base_z*base_z)}"
+          izz="${(1.0/12.0)*base_mass*(base_x*base_x + base_y*base_y)}"
           ixy="0" ixz="0" iyz="0"/>
       </inertial>
 
     </link>
+
+    <!-- ================================================================
+         GAZEBO — base_link surface
+         Low friction chassis body (it shouldn't drag on anything).
+         Gazebo Harmonic uses <gz> namespace for surface params.
+       ================================================================ -->
+    <gazebo reference="base_link">
+      <material>Gazebo/DarkGrey</material>
+      <surface>
+        <friction>
+          <ode>
+            <mu>0.3</mu>
+            <mu2>0.3</mu2>
+          </ode>
+        </friction>
+        <contact>
+          <ode>
+            <kp>1e6</kp>
+            <kd>100.0</kd>
+          </ode>
+        </contact>
+      </surface>
+    </gazebo>
+
+    <gazebo reference="base_footprint">
+      <material>Gazebo/Black</material>
+    </gazebo>
+
+    <!-- ================================================================
+         GAZEBO — ros2_control plugin
+         Loads the GazeboSimROS2ControlPlugin which drives all
+         hardware interfaces declared in arm.xacro and wheels.xacro.
+         Also spawns a JointStateBroadcaster automatically.
+       ================================================================ -->
+    <gazebo>
+      <plugin filename="gz_ros2_control-system"
+              name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <!-- Path to the controllers YAML — adjust to your config dir -->
+        <parameters>$(find orion_description)/config/ros2_controllers.yaml</parameters>
+        <ros>
+          <remapping>~/robot_description:=/robot_description</remapping>
+        </ros>
+      </plugin>
+    </gazebo>
+
+    <!-- Clock bridging is handled in the launch file via ros_gz_bridge -->
 
   </xacro:macro>
 
