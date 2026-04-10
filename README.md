@@ -17,19 +17,19 @@ ORION combines:
 ---
 
 # 📁 Repository Structure
-ORION/
-├── CPP Practice/ # C++ experiments & robotics logic tests
-├── Documenting/ # CAD visuals, diagrams, progress logs
-├── orion_commands/ # Utility scripts & command tools
-├── orion_ws/ # ROS 2 workspace (core system)
-│ ├── src/orion_description # Robot model (URDF/Xacro)
-│ ├── config # Controllers & parameters
-│ ├── launch # ROS2 launch files
-│ ├── xacro # Modular robot components
-│ ├── dev_workflow.sh # Build/launch automation
-│ └── WORKFLOW_README.md
-├── Simulation/ # Python kinematics & control experiments
-└── README.md # This file
+ORION/   
+├── CPP Practice/ **C++ experiments & robotics logic tests**   
+├── Documenting/ __CAD visuals, diagrams, progress logs__   
+├── orion_commands/ **Utility scripts & command tools**   
+├── orion_ws/ **ROS 2 workspace**      
+│ ├── src/orion_description **URDF/Xacro Robot model**      
+│ ├── config **Controllers & parameters**   
+│ ├── launch **ROS2 launch files**   
+│ ├── xacro **Modular robot components**   
+│ ├── dev_workflow.sh **Build/launch automation**   
+│ └── WORKFLOW_README.md   
+├── Simulation/ **Python kinematics & control experiments**   
+└── README.md **This file**   
 
 
 ---
