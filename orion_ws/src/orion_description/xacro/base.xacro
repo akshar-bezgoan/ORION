@@ -1,33 +1,13 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- ================================================================
-       ORION BASE  —  Gazebo-ready
-         Gazebo additions:
-           • <gazebo reference> surface/friction for base_link
-           • Gazebo material colours
-           • gz_ros2_control + JointStateBroadcaster plugin
-       ================================================================ -->
-
-  <xacro:property name="base_x"     value="0.280"/>
-  <xacro:property name="base_y"     value="0.320"/>
-  <xacro:property name="base_z"     value="0.105"/>
-  <xacro:property name="base_mass"  value="3.5"/>
+  <xacro:property name="base_x"      value="0.280"/>
+  <xacro:property name="base_y"      value="0.320"/>
+  <xacro:property name="base_z"      value="0.105"/>
+  <xacro:property name="base_mass"   value="3.5"/>
   <xacro:property name="wheel_radius" value="0.050"/>
-  <xacro:property name="base_link_z"  value="${wheel_radius + base_z / 2.0}"/>
 
   <xacro:macro name="base">
-
-    <!-- ── Ground reference frame ──────────────────────────────── -->
-    <link name="base_footprint"/>
-
-    <joint name="base_footprint_joint" type="fixed">
-      <parent link="base_footprint"/>
-      <child  link="base_link"/>
-      <origin xyz="0 0 ${base_link_z}" rpy="0 0 0"/>
-    </joint>
-
-    <!-- ── Main chassis ─────────────────────────────────────────── -->
     <link name="base_link">
 
       <!-- Outer shell -->
@@ -90,11 +70,6 @@
 
     </link>
 
-    <!-- ================================================================
-         GAZEBO — base_link surface
-         Low friction chassis body (it shouldn't drag on anything).
-         Gazebo Harmonic uses <gz> namespace for surface params.
-       ================================================================ -->
     <gazebo reference="base_link">
       <material>Gazebo/DarkGrey</material>
       <surface>
@@ -113,28 +88,15 @@
       </surface>
     </gazebo>
 
-    <gazebo reference="base_footprint">
-      <material>Gazebo/Black</material>
-    </gazebo>
-
-    <!-- ================================================================
-         GAZEBO — ros2_control plugin
-         Loads the GazeboSimROS2ControlPlugin which drives all
-         hardware interfaces declared in arm.xacro and wheels.xacro.
-         Also spawns a JointStateBroadcaster automatically.
-       ================================================================ -->
     <gazebo>
       <plugin filename="gz_ros2_control-system"
               name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-        <!-- Path to the controllers YAML — adjust to your config dir -->
         <parameters>$(find orion_description)/config/ros2_controllers.yaml</parameters>
         <ros>
           <remapping>~/robot_description:=/robot_description</remapping>
         </ros>
       </plugin>
     </gazebo>
-
-    <!-- Clock bridging is handled in the launch file via ros_gz_bridge -->
 
   </xacro:macro>
 

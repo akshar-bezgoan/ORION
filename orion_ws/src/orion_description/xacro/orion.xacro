@@ -1,24 +1,6 @@
 <?xml version="1.0"?>
 <robot name="orion" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- ================================================================
-       ORION  —  Top-level xacro (Gazebo Harmonic + ROS2 Jazzy)
-
-       Plugin summary (all declared in sub-files):
-         base.xacro    → gz_ros2_control (arm joint control)
-         wheels.xacro  → gz-sim-mecanum-drive-system (/cmd_vel → /odom)
-         sensors.xacro → gpu_lidar sensor on lidar_link (/scan)
-         HERE          → gz-sim-sensors-system (needed to activate sensors)
-                       → gz-sim-imu-system     (future IMU support)
-
-       TODO: Bridge topics: (add to gazebo.launch.py)
-         /scan         → sensor_msgs/msg/LaserScan
-         /odom         → nav_msgs/msg/Odometry
-         /cmd_vel      → geometry_msgs/msg/Twist
-         /tf           → tf2_msgs/msg/TFMessage
-         /clock        → rosgraph_msgs/msg/Clock
-       ================================================================ -->
-
   <!--Import-->
   <xacro:include filename="$(find orion_description)/xacro/materials.xacro"/>
   <xacro:include filename="$(find orion_description)/xacro/base.xacro"/>
@@ -44,7 +26,5 @@
     <plugin filename="gz-sim-imu-system"
             name="gz::sim::systems::Imu"/>
   </gazebo>
-
-  <!-- gz_ros2_control is loaded once in base.xacro -->
 
 </robot>

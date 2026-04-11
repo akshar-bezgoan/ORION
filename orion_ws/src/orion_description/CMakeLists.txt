@@ -7,6 +7,7 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(rclpy REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -23,7 +24,8 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
-ament_package()
+install(PROGRAMS scripts/mecanum_ik_node.py
+        DESTINATION lib/${PROJECT_NAME})
 
 install(
   DIRECTORY
@@ -33,4 +35,7 @@ install(
     config
   DESTINATION share/${PROJECT_NAME}
 )
+
+
+ament_package()
 

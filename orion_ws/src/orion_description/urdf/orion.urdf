@@ -56,33 +56,12 @@
   <material name="yellow">
     <color rgba="1.00 0.85 0.00 1.0"/>
   </material>
-  <!-- ================================================================
-       ORION BASE  —  Gazebo-ready
-         Gazebo additions:
-           • <gazebo reference> surface/friction for base_link
-           • Gazebo material colours
-           • gz_ros2_control + JointStateBroadcaster plugin
-       ================================================================ -->
-  <!-- ================================================================
-       ORION MECANUM WHEELS  —  Gazebo-ready
-         Gazebo additions:
-           • Per-wheel <gazebo reference> with mecanum-style friction:
-               mu  (longitudinal, along wheel spin) = high  ≈ 1.0
-               mu2 (lateral, across rollers)        = low   ≈ 0.1
-               fdir1 set to the wheel's forward direction in its frame
-           • MecanumDrive plugin (gz-sim-mecanum-drive-system)
-             Publishes odometry and subscribes to /cmd_vel (Twist).
-       ================================================================ -->
-  <!-- ── Ground reference frame ──────────────────────────────── -->
-  <link name="base_footprint"/>
-  <joint name="base_footprint_joint" type="fixed">
-    <parent link="base_footprint"/>
-    <child link="base_link"/>
-    <origin rpy="0 0 0" xyz="0 0 0.10250000000000001"/>
-  </joint>
-  <!-- ── Main chassis ─────────────────────────────────────────── -->
+  <!-- ── Root link — base_link is the root, no base_footprint.
+         base_footprint caused Gazebo to flatten the fixed joint and
+         re-parent all wheel joints to base_footprint, breaking the
+         MecanumDrive plugin's wheelbase/separation geometry so that
+         strafe kinematics produced zero net movement. ── -->
   <link name="base_link">
-    <!-- Outer shell -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
@@ -90,7 +69,6 @@
       </geometry>
       <material name="dark_grey"/>
     </visual>
-    <!-- Top plate -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0.0485"/>
       <geometry>
@@ -98,7 +76,6 @@
       </geometry>
       <material name="grey"/>
     </visual>
-    <!-- Battery layer -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 -0.034999999999999996"/>
       <geometry>
@@ -106,7 +83,6 @@
       </geometry>
       <material name="black"/>
     </visual>
-    <!-- Motor driver layer -->
     <visual>
       <origin rpy="0 0 0" xyz="-0.04 0 -0.004499999999999997"/>
       <geometry>
@@ -114,7 +90,6 @@
       </geometry>
       <material name="dark_grey"/>
     </visual>
-    <!-- Power + ESP32 layer -->
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0.015500000000000007"/>
       <geometry>
@@ -122,7 +97,6 @@
       </geometry>
       <material name="dark_grey"/>
     </visual>
-    <!-- Raspberry Pi 5 PCB -->
     <visual>
       <origin rpy="0 0 0" xyz="-0.03 0.03 0.0355"/>
       <geometry>
@@ -130,7 +104,6 @@
       </geometry>
       <material name="green"/>
     </visual>
-    <!-- Arm mount boss -->
     <visual>
       <origin rpy="0 0 0" xyz="0.0 0.0 0.0645"/>
       <geometry>
@@ -150,11 +123,6 @@
       <inertia ixx="0.03308229166666666" ixy="0" ixz="0" iyy="0.026082291666666663" iyz="0" izz="0.05273333333333333"/>
     </inertial>
   </link>
-  <!-- ================================================================
-         GAZEBO — base_link surface
-         Low friction chassis body (it shouldn't drag on anything).
-         Gazebo Harmonic uses <gz> namespace for surface params.
-       ================================================================ -->
   <gazebo reference="base_link">
     <material>Gazebo/DarkGrey</material>
     <surface>
@@ -172,34 +140,16 @@
       </contact>
     </surface>
   </gazebo>
-  <gazebo reference="base_footprint">
-    <material>Gazebo/Black</material>
-  </gazebo>
-  <!-- ================================================================
-         GAZEBO — ros2_control plugin
-         Loads the GazeboSimROS2ControlPlugin which drives all
-         hardware interfaces declared in arm.xacro and wheels.xacro.
-         Also spawns a JointStateBroadcaster automatically.
-       ================================================================ -->
+  <!-- gz_ros2_control plugin — drives arm + gripper joints -->
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-      <!-- Path to the controllers YAML — adjust to your config dir -->
       <parameters>/home/akkibez/Documents/ORION/orion_ws/install/orion_description/share/orion_description/config/ros2_controllers.yaml</parameters>
       <ros>
         <remapping>~/robot_description:=/robot_description</remapping>
       </ros>
     </plugin>
   </gazebo>
-  <!-- ================================================================
-         GAZEBO — ros_gz_sim bridge
-         Publishes /clock so ROS2 nodes get sim time.
-       ================================================================ -->
-  <gazebo>
-    <plugin filename="gz-sim-ros-system" name="gz_ros2::GazeboRosFactory">
-      </plugin>
-  </gazebo>
   <link name="front_left_wheel_link">
-    <!-- Tyre -->
     <visual>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
       <geometry>
@@ -207,63 +157,22 @@
       </geometry>
       <material name="black"/>
     </visual>
-    <!-- Hub -->
     <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0.02 0"/>
       <geometry>
-        <cylinder length="0.042" radius="0.019000000000000003"/>
+        <box size="0.002 0.04 0.1"/>
       </geometry>
-      <material name="grey"/>
-    </visual>
-    <!-- Axle stubs -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0  0.026000000000000002 0"/>
-      <geometry>
-        <cylinder length="0.012" radius="0.008"/>
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 -0.026000000000000002 0"/>
-      <geometry>
-        <cylinder length="0.012" radius="0.008"/>
-      </geometry>
-      <material name="dark_grey"/>
+      <material name="white"/>
     </visual>
     <collision>
       <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
       <geometry>
         <cylinder length="0.04" radius="0.05"/>
       </geometry>
-      <!-- Cylinder friction surface: align contact normal with wheel spin axis -->
-      <surface>
-        <friction>
-          <ode>
-            <!-- mu  = longitudinal (tyre rolling direction) -->
-            <mu>1.0</mu>
-            <!-- mu2 = lateral (roller slip direction) — low for mecanum -->
-            <mu2>0.1</mu2>
-            <!-- fdir1: forward direction in the wheel's collision frame.
-                   The wheel collision is rotated pi/2 around X, so the
-                   wheel's forward (X in link frame) maps to Z here. -->
-            <fdir1>0 0 1</fdir1>
-            <slip1>0.0</slip1>
-            <slip2>0.05</slip2>
-          </ode>
-        </friction>
-        <contact>
-          <ode>
-            <kp>1e6</kp>
-            <kd>1.0</kd>
-            <min_depth>0.001</min_depth>
-            <max_vel>0.1</max_vel>
-          </ode>
-        </contact>
-      </surface>
     </collision>
     <inertial>
       <mass value="0.3"/>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin xyz="0 0 0"/>
       <inertia ixx="0.00022750000000000003" ixy="0" ixz="0" iyy="0.000375" iyz="0" izz="0.00022750000000000003"/>
     </inertial>
   </link>
@@ -272,66 +181,24 @@
     <child link="front_left_wheel_link"/>
     <origin rpy="0 0 0" xyz="0.095 0.13 -0.0525"/>
     <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.05"/>
   </joint>
-  <!-- ── Gazebo wheel colour ── -->
   <gazebo reference="front_left_wheel_link">
     <material>Gazebo/Black</material>
-  </gazebo>
-  <!-- ── ros2_control hardware interface for this wheel ── -->
-  <!-- Declared here so each wheel macro registers its own interface.
-         gz_ros2_control will pick these up automatically.             -->
-  <link name="front_right_wheel_link">
-    <!-- Tyre -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.05"/>
-      </geometry>
-      <material name="black"/>
-    </visual>
-    <!-- Hub -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.042" radius="0.019000000000000003"/>
-      </geometry>
-      <material name="grey"/>
-    </visual>
-    <!-- Axle stubs -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0  0.026000000000000002 0"/>
-      <geometry>
-        <cylinder length="0.012" radius="0.008"/>
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 -0.026000000000000002 0"/>
-      <geometry>
-        <cylinder length="0.012" radius="0.008"/>
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
     <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.05"/>
-      </geometry>
-      <!-- Cylinder friction surface: align contact normal with wheel spin axis -->
       <surface>
         <friction>
           <ode>
-            <!-- mu  = longitudinal (tyre rolling direction) -->
+            <!-- mu  = friction along fdir1 = wheel rolling direction (X in link frame)
+                         High value gives traction in the drive direction.           -->
             <mu>1.0</mu>
-            <!-- mu2 = lateral (roller slip direction) — low for mecanum -->
+            <!-- mu2 = friction perpendicular to fdir1 = lateral/roller direction (Y)
+                         Low value lets the passive rollers slip sideways freely.    -->
             <mu2>0.1</mu2>
-            <!-- fdir1: forward direction in the wheel's collision frame.
-                   The wheel collision is rotated pi/2 around X, so the
-                   wheel's forward (X in link frame) maps to Z here. -->
-            <fdir1>0 0 1</fdir1>
-            <slip1>0.0</slip1>
-            <slip2>0.05</slip2>
+            <!-- fdir1 MUST be set explicitly. Without it ODE picks a random
+                   contact-plane direction at each timestep, creating the random
+                   rotation / backward-loop behaviour seen with mecanum wheels.
+                   X in the link frame = the wheel's forward rolling direction.     -->
+            <fdir1>1 0 0</fdir1>
           </ode>
         </friction>
         <contact>
@@ -344,9 +211,31 @@
         </contact>
       </surface>
     </collision>
+  </gazebo>
+  <link name="front_right_wheel_link">
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.04" radius="0.05"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0.02 0"/>
+      <geometry>
+        <box size="0.002 0.04 0.1"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.04" radius="0.05"/>
+      </geometry>
+    </collision>
     <inertial>
       <mass value="0.3"/>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin xyz="0 0 0"/>
       <inertia ixx="0.00022750000000000003" ixy="0" ixz="0" iyy="0.000375" iyz="0" izz="0.00022750000000000003"/>
     </inertial>
   </link>
@@ -355,66 +244,24 @@
     <child link="front_right_wheel_link"/>
     <origin rpy="0 0 0" xyz="0.095 -0.13 -0.0525"/>
     <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.05"/>
   </joint>
-  <!-- ── Gazebo wheel colour ── -->
   <gazebo reference="front_right_wheel_link">
     <material>Gazebo/Black</material>
-  </gazebo>
-  <!-- ── ros2_control hardware interface for this wheel ── -->
-  <!-- Declared here so each wheel macro registers its own interface.
-         gz_ros2_control will pick these up automatically.             -->
-  <link name="rear_left_wheel_link">
-    <!-- Tyre -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.05"/>
-      </geometry>
-      <material name="black"/>
-    </visual>
-    <!-- Hub -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.042" radius="0.019000000000000003"/>
-      </geometry>
-      <material name="grey"/>
-    </visual>
-    <!-- Axle stubs -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0  0.026000000000000002 0"/>
-      <geometry>
-        <cylinder length="0.012" radius="0.008"/>
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 -0.026000000000000002 0"/>
-      <geometry>
-        <cylinder length="0.012" radius="0.008"/>
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
     <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.05"/>
-      </geometry>
-      <!-- Cylinder friction surface: align contact normal with wheel spin axis -->
       <surface>
         <friction>
           <ode>
-            <!-- mu  = longitudinal (tyre rolling direction) -->
+            <!-- mu  = friction along fdir1 = wheel rolling direction (X in link frame)
+                         High value gives traction in the drive direction.           -->
             <mu>1.0</mu>
-            <!-- mu2 = lateral (roller slip direction) — low for mecanum -->
+            <!-- mu2 = friction perpendicular to fdir1 = lateral/roller direction (Y)
+                         Low value lets the passive rollers slip sideways freely.    -->
             <mu2>0.1</mu2>
-            <!-- fdir1: forward direction in the wheel's collision frame.
-                   The wheel collision is rotated pi/2 around X, so the
-                   wheel's forward (X in link frame) maps to Z here. -->
-            <fdir1>0 0 1</fdir1>
-            <slip1>0.0</slip1>
-            <slip2>0.05</slip2>
+            <!-- fdir1 MUST be set explicitly. Without it ODE picks a random
+                   contact-plane direction at each timestep, creating the random
+                   rotation / backward-loop behaviour seen with mecanum wheels.
+                   X in the link frame = the wheel's forward rolling direction.     -->
+            <fdir1>1 0 0</fdir1>
           </ode>
         </friction>
         <contact>
@@ -427,9 +274,31 @@
         </contact>
       </surface>
     </collision>
+  </gazebo>
+  <link name="rear_left_wheel_link">
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.04" radius="0.05"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0.02 0"/>
+      <geometry>
+        <box size="0.002 0.04 0.1"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.04" radius="0.05"/>
+      </geometry>
+    </collision>
     <inertial>
       <mass value="0.3"/>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin xyz="0 0 0"/>
       <inertia ixx="0.00022750000000000003" ixy="0" ixz="0" iyy="0.000375" iyz="0" izz="0.00022750000000000003"/>
     </inertial>
   </link>
@@ -438,66 +307,24 @@
     <child link="rear_left_wheel_link"/>
     <origin rpy="0 0 0" xyz="-0.095 0.13 -0.0525"/>
     <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.05"/>
   </joint>
-  <!-- ── Gazebo wheel colour ── -->
   <gazebo reference="rear_left_wheel_link">
     <material>Gazebo/Black</material>
-  </gazebo>
-  <!-- ── ros2_control hardware interface for this wheel ── -->
-  <!-- Declared here so each wheel macro registers its own interface.
-         gz_ros2_control will pick these up automatically.             -->
-  <link name="rear_right_wheel_link">
-    <!-- Tyre -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.05"/>
-      </geometry>
-      <material name="black"/>
-    </visual>
-    <!-- Hub -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.042" radius="0.019000000000000003"/>
-      </geometry>
-      <material name="grey"/>
-    </visual>
-    <!-- Axle stubs -->
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0  0.026000000000000002 0"/>
-      <geometry>
-        <cylinder length="0.012" radius="0.008"/>
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
-    <visual>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 -0.026000000000000002 0"/>
-      <geometry>
-        <cylinder length="0.012" radius="0.008"/>
-      </geometry>
-      <material name="dark_grey"/>
-    </visual>
     <collision>
-      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
-      <geometry>
-        <cylinder length="0.04" radius="0.05"/>
-      </geometry>
-      <!-- Cylinder friction surface: align contact normal with wheel spin axis -->
       <surface>
         <friction>
           <ode>
-            <!-- mu  = longitudinal (tyre rolling direction) -->
+            <!-- mu  = friction along fdir1 = wheel rolling direction (X in link frame)
+                         High value gives traction in the drive direction.           -->
             <mu>1.0</mu>
-            <!-- mu2 = lateral (roller slip direction) — low for mecanum -->
+            <!-- mu2 = friction perpendicular to fdir1 = lateral/roller direction (Y)
+                         Low value lets the passive rollers slip sideways freely.    -->
             <mu2>0.1</mu2>
-            <!-- fdir1: forward direction in the wheel's collision frame.
-                   The wheel collision is rotated pi/2 around X, so the
-                   wheel's forward (X in link frame) maps to Z here. -->
-            <fdir1>0 0 1</fdir1>
-            <slip1>0.0</slip1>
-            <slip2>0.05</slip2>
+            <!-- fdir1 MUST be set explicitly. Without it ODE picks a random
+                   contact-plane direction at each timestep, creating the random
+                   rotation / backward-loop behaviour seen with mecanum wheels.
+                   X in the link frame = the wheel's forward rolling direction.     -->
+            <fdir1>1 0 0</fdir1>
           </ode>
         </friction>
         <contact>
@@ -510,9 +337,31 @@
         </contact>
       </surface>
     </collision>
+  </gazebo>
+  <link name="rear_right_wheel_link">
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.04" radius="0.05"/>
+      </geometry>
+      <material name="black"/>
+    </visual>
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0.02 0"/>
+      <geometry>
+        <box size="0.002 0.04 0.1"/>
+      </geometry>
+      <material name="white"/>
+    </visual>
+    <collision>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <geometry>
+        <cylinder length="0.04" radius="0.05"/>
+      </geometry>
+    </collision>
     <inertial>
       <mass value="0.3"/>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin xyz="0 0 0"/>
       <inertia ixx="0.00022750000000000003" ixy="0" ixz="0" iyy="0.000375" iyz="0" izz="0.00022750000000000003"/>
     </inertial>
   </link>
@@ -521,49 +370,51 @@
     <child link="rear_right_wheel_link"/>
     <origin rpy="0 0 0" xyz="-0.095 -0.13 -0.0525"/>
     <axis xyz="0 1 0"/>
-    <dynamics damping="0.01" friction="0.05"/>
   </joint>
-  <!-- ── Gazebo wheel colour ── -->
   <gazebo reference="rear_right_wheel_link">
     <material>Gazebo/Black</material>
+    <collision>
+      <surface>
+        <friction>
+          <ode>
+            <!-- mu  = friction along fdir1 = wheel rolling direction (X in link frame)
+                         High value gives traction in the drive direction.           -->
+            <mu>1.0</mu>
+            <!-- mu2 = friction perpendicular to fdir1 = lateral/roller direction (Y)
+                         Low value lets the passive rollers slip sideways freely.    -->
+            <mu2>0.1</mu2>
+            <!-- fdir1 MUST be set explicitly. Without it ODE picks a random
+                   contact-plane direction at each timestep, creating the random
+                   rotation / backward-loop behaviour seen with mecanum wheels.
+                   X in the link frame = the wheel's forward rolling direction.     -->
+            <fdir1>1 0 0</fdir1>
+          </ode>
+        </friction>
+        <contact>
+          <ode>
+            <kp>1e6</kp>
+            <kd>1.0</kd>
+            <min_depth>0.001</min_depth>
+            <max_vel>0.1</max_vel>
+          </ode>
+        </contact>
+      </surface>
+    </collision>
   </gazebo>
-  <!-- ── ros2_control hardware interface for this wheel ── -->
-  <!-- Declared here so each wheel macro registers its own interface.
-         gz_ros2_control will pick these up automatically.             -->
-  <!-- ==============================================================
-         GAZEBO — MecanumDrive plugin
-           Subscribes : /cmd_vel  (geometry_msgs/Twist)
-           Publishes  : /odom     (nav_msgs/Odometry)
-                        /tf       (odom → base_footprint)
-
-         Wheel names must match joint names exactly.
-         front_left  / front_right rollers are at +45° (X pattern),
-         rear_left   / rear_right  rollers are at -45°.
-         The plugin uses these signs internally.
-         ============================================================== -->
   <gazebo>
     <plugin filename="gz-sim-mecanum-drive-system" name="gz::sim::systems::MecanumDrive">
-      <!-- Wheel joints -->
       <front_left_joint>front_left_wheel_joint</front_left_joint>
       <front_right_joint>front_right_wheel_joint</front_right_joint>
-      <rear_left_joint>rear_left_wheel_joint</rear_left_joint>
-      <rear_right_joint>rear_right_wheel_joint</rear_right_joint>
-      <!-- Physical parameters  (must match xacro properties above) -->
+      <back_left_joint>rear_left_wheel_joint</back_left_joint>
+      <back_right_joint>rear_right_wheel_joint</back_right_joint>
       <wheel_separation>0.26</wheel_separation>
       <wheelbase>0.19</wheelbase>
       <wheel_radius>0.05</wheel_radius>
-      <!-- ROS topics -->
       <topic>/cmd_vel</topic>
       <odom_topic>/odom</odom_topic>
       <tf_topic>/tf</tf_topic>
       <frame_id>odom</frame_id>
-      <child_frame_id>base_footprint</child_frame_id>
-      <!-- Publish odometry TF -->
-      <publish_odom>true</publish_odom>
-      <publish_odom_tf>true</publish_odom_tf>
-      <!-- Max velocity limits -->
-      <max_linear_velocity>1.0</max_linear_velocity>
-      <max_angular_velocity>2.0</max_angular_velocity>
+      <child_frame_id>base_link</child_frame_id>
     </plugin>
   </gazebo>
   <!--Mast-->
@@ -999,7 +850,7 @@
   <!--ROS2 Control plugin-->
   <ros2_control name="orion_arm" type="system">
     <hardware>
-      <plugin>gz_ros2_control/GazeboSystem</plugin>
+      <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
     <joint name="shoulder_joint">
       <command_interface name="position"/>
@@ -1062,10 +913,5 @@
   </gazebo>
   <gazebo>
     <plugin filename="gz-sim-imu-system" name="gz::sim::systems::Imu"/>
-  </gazebo>
-  <gazebo>
-    <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSystem">
-      <parameters>/home/akkibez/Documents/ORION/orion_ws/install/orion_description/share/orion_description/config/ros2_controllers.yaml</parameters>
-    </plugin>
   </gazebo>
 </robot>

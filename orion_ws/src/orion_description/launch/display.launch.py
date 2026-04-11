@@ -1,5 +1,4 @@
 import os
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
@@ -9,11 +8,11 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
 
-    pkg_path = get_package_share_directory('orion_description')
+    pkg_path   = get_package_share_directory('orion_description')
     xacro_file = os.path.join(pkg_path, 'xacro', 'orion.xacro')
 
     robot_description = ParameterValue(
-        Command('xacro ' + xacro_file),
+        Command(['xacro ', xacro_file]),
         value_type=str
     )
 
@@ -24,9 +23,7 @@ def generate_launch_description():
             executable='robot_state_publisher',
             name='robot_state_publisher',
             output='screen',
-            parameters=[{
-                'robot_description': robot_description
-            }]
+            parameters=[{'robot_description': robot_description}]
         ),
 
         Node(
