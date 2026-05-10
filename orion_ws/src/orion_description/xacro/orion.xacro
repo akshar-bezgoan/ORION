@@ -14,17 +14,5 @@
   <xacro:sensors/>
   <xacro:arm/>
 
-  <!--GZ Sensor activation system-->
-  <gazebo>
-    <plugin filename="gz-sim-sensors-system"
-            name="gz::sim::systems::Sensors">
-      <render_engine>ogre2</render_engine>
-    </plugin>
-  </gazebo>
-
-  <gazebo>
-    <plugin filename="gz-sim-imu-system"
-            name="gz::sim::systems::Imu"/>
-  </gazebo>
 
 </robot>

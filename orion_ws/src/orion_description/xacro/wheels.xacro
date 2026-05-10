@@ -44,64 +44,13 @@
       <dynamics damping="0.01" friction="0.01"/>
     </joint>
 
-    <gazebo reference="${name}_wheel_link">
-      <material>Gazebo/Black</material>
-      <collision>
-        <surface>
-          <friction>
-            <ode>
-              <mu>1.0</mu>
-              <mu2>0.1</mu2>
-              <fdir1>0.7071 ${fdir1_y} 0</fdir1>
-            </ode>
-          </friction>
-          <contact>
-            <ode>
-              <kp>1e6</kp>
-              <kd>1.0</kd>
-              <min_depth>0.001</min_depth>
-              <max_vel>0.1</max_vel>
-            </ode>
-          </contact>
-        </surface>
-      </collision>
-    </gazebo>
   </xacro:macro>
 
   <xacro:macro name="wheels">
-    <!-- Signs have NO leading spaces: "1" not " 1", "-1" not "-1" -->
     <xacro:mecanum_wheel name="front_left"  x_sign="1"  y_sign="1"  fdir1_y="-0.7071"/>
     <xacro:mecanum_wheel name="front_right" x_sign="1"  y_sign="-1" fdir1_y="0.7071"/>
     <xacro:mecanum_wheel name="rear_left"   x_sign="-1" y_sign="1"  fdir1_y="0.7071"/>
     <xacro:mecanum_wheel name="rear_right"  x_sign="-1" y_sign="-1" fdir1_y="-0.7071"/>
-
-    <!-- ros2_control block — all 4 wheels velocity-controlled via
-         forward_command_controller + mecanum_ik_node. -->
-    <ros2_control name="orion_base" type="system">
-      <hardware>
-        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
-      </hardware>
-      <joint name="front_left_wheel_joint">
-        <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
-      </joint>
-      <joint name="front_right_wheel_joint">
-        <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
-      </joint>
-      <joint name="rear_left_wheel_joint">
-        <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
-      </joint>
-      <joint name="rear_right_wheel_joint">
-        <command_interface name="velocity"/>
-        <state_interface name="position"/>
-        <state_interface name="velocity"/>
-      </joint>
-    </ros2_control>
 
   </xacro:macro>
 

@@ -70,34 +70,6 @@
 
     </link>
 
-    <gazebo reference="base_link">
-      <material>Gazebo/DarkGrey</material>
-      <surface>
-        <friction>
-          <ode>
-            <mu>0.3</mu>
-            <mu2>0.3</mu2>
-          </ode>
-        </friction>
-        <contact>
-          <ode>
-            <kp>1e6</kp>
-            <kd>100.0</kd>
-          </ode>
-        </contact>
-      </surface>
-    </gazebo>
-
-    <gazebo>
-      <plugin filename="gz_ros2_control-system"
-              name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-        <parameters>$(find orion_description)/config/ros2_controllers.yaml</parameters>
-        <ros>
-          <remapping>~/robot_description:=/robot_description</remapping>
-        </ros>
-      </plugin>
-    </gazebo>
-
   </xacro:macro>
 
 </robot>
