@@ -51,7 +51,7 @@
             <ode>
               <mu>1.0</mu>
               <mu2>0.1</mu2>
-              <fdir1>1 $(fdir1_y) 0 </fdir1>
+              <fdir1>1 ${fdir1_y} 0 </fdir1>
             </ode>
           </friction>
         </surface>
@@ -61,10 +61,10 @@
   </xacro:macro>
 
   <xacro:macro name="wheels">
-    <xacro:mecanum_wheel name="front_left"  x_sign="1"  y_sign="1"  fdir1_y="-0.7071"/>
-    <xacro:mecanum_wheel name="front_right" x_sign="1"  y_sign="-1" fdir1_y="0.7071"/>
-    <xacro:mecanum_wheel name="rear_left"   x_sign="-1" y_sign="1"  fdir1_y="0.7071"/>
-    <xacro:mecanum_wheel name="rear_right"  x_sign="-1" y_sign="-1" fdir1_y="-0.7071"/>
+    <xacro:mecanum_wheel name="front_left"  x_sign="1"  y_sign="1"  fdir1_y="-1"/>
+    <xacro:mecanum_wheel name="front_right" x_sign="1"  y_sign="-1" fdir1_y="1"/>
+    <xacro:mecanum_wheel name="rear_left"   x_sign="-1" y_sign="1"  fdir1_y="1"/>
+    <xacro:mecanum_wheel name="rear_right"  x_sign="-1" y_sign="-1" fdir1_y="-1"/>
   </xacro:macro>
 
 </robot>
