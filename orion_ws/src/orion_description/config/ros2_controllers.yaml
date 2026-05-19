@@ -21,12 +21,12 @@ mecanum_controller:
     rear_left_wheel_name: "rear_left_wheel_joint"
     rear_right_wheel_name: "rear_right_wheel_joint"
 
-    wheel_seperation_x: 0.19
-    wheel_seperation_y: 0.26
+    wheel_separation_x: 0.19
+    wheel_separation_y: 0.26
     wheel_radius: 0.05
 
     base_frame_id: base_link
-    odom_fram_id: odom
+    odom_frame_id: odom
     enable_odom_tf: true
     use_stamped_vel: false
 

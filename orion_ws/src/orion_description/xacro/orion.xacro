@@ -1,18 +1,538 @@
 <?xml version="1.0"?>
 <robot name="orion" xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!--Import-->
-  <xacro:include filename="$(find orion_description)/xacro/materials.xacro"/>
-  <xacro:include filename="$(find orion_description)/xacro/base.xacro"/>
-  <xacro:include filename="$(find orion_description)/xacro/wheels.xacro"/>
-  <xacro:include filename="$(find orion_description)/xacro/sensors.xacro"/>
-  <xacro:include filename="$(find orion_description)/xacro/arm.xacro"/>
+  <!-- ================================================================
+       orion.xacro  –  single-file robot description
+       Sections:  1. Materials
+                  2. Properties
+                  3. Inertia helper macros  (arm)
+                  4. Base macro
+                  5. Wheels macro
+                  6. Sensors macro
+                  7. Arm macro
+                  8. Instantiation
+       ================================================================ -->
 
-  <!--Instantiate-->
+
+  <!-- ── 1. MATERIALS ─────────────────────────────────────────────── -->
+  <material name="grey">      <color rgba="0.60 0.60 0.60 1.0"/></material>
+  <material name="dark_grey"> <color rgba="0.25 0.25 0.25 1.0"/></material>
+  <material name="black">     <color rgba="0.08 0.08 0.08 1.0"/></material>
+  <material name="white">     <color rgba="0.90 0.90 0.90 1.0"/></material>
+  <material name="red">       <color rgba="0.80 0.10 0.10 1.0"/></material>
+  <material name="blue">      <color rgba="0.10 0.10 0.80 1.0"/></material>
+  <material name="green">     <color rgba="0.10 0.70 0.10 1.0"/></material>
+  <material name="orange">    <color rgba="1.00 0.45 0.00 1.0"/></material>
+  <material name="yellow">    <color rgba="1.00 0.85 0.00 1.0"/></material>
+
+  <xacro:macro name="gz_material" params="link gz_mat">
+    <gazebo reference="${link}">
+      <material>${gz_mat}</material>
+    </gazebo>
+  </xacro:macro>
+
+
+  <!-- ── 2. PROPERTIES ─────────────────────────────────────────────── -->
+  <!-- Base -->
+  <xacro:property name="base_x"      value="0.280"/>
+  <xacro:property name="base_y"      value="0.320"/>
+  <xacro:property name="base_z"      value="0.105"/>
+  <xacro:property name="base_mass"   value="3.5"/>
+
+  <!-- Wheels -->
+  <xacro:property name="wheel_radius" value="0.050"/>
+  <xacro:property name="wheel_width"  value="0.040"/>
+  <xacro:property name="wheel_mass"   value="0.3"/>
+  <xacro:property name="wheel_x_off"  value="0.095"/>
+  <xacro:property name="wheel_y_off"  value="0.130"/>
+  <xacro:property name="wheel_z_off"  value="${-base_z/2.0}"/>
+
+  <!-- Sensors -->
+  <xacro:property name="mast_r"    value="0.010"/>
+  <xacro:property name="mast_h"    value="0.360"/>
+  <xacro:property name="mast_x"    value="-0.100"/>
+  <xacro:property name="mast_y"    value="0.000"/>
+  <xacro:property name="lidar_r"   value="0.038"/>
+  <xacro:property name="lidar_h"   value="0.041"/>
+  <xacro:property name="lidar_m"   value="0.185"/>
+  <xacro:property name="imu_xyz"   value="0.02"/>
+
+  <!-- Arm -->
+  <xacro:property name="arm_mount_h"   value="0.024"/>
+  <xacro:property name="shoulder_h"    value="0.055"/>
+  <xacro:property name="upper_arm_l"   value="0.150"/>
+  <xacro:property name="forearm_l"     value="0.120"/>
+  <xacro:property name="hand_l"        value="0.055"/>
+  <xacro:property name="r0"  value="0.020"/>
+  <xacro:property name="r1"  value="0.018"/>
+  <xacro:property name="r2"  value="0.015"/>
+  <xacro:property name="r3"  value="0.012"/>
+  <xacro:property name="m_shoulder"   value="0.30"/>
+  <xacro:property name="m_upper_arm"  value="0.24"/>
+  <xacro:property name="m_forearm"    value="0.18"/>
+  <xacro:property name="m_hand"       value="0.10"/>
+  <xacro:property name="m_gripper"    value="0.12"/>
+
+
+  <!-- ── 3. INERTIA HELPER MACROS ──────────────────────────────────── -->
+  <xacro:macro name="inertia_cyl_z" params="m r l">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="0 0 ${l/2.0}" rpy="0 0 0"/>
+      <inertia
+        ixx="${(1.0/12.0)*m*(3.0*r*r + l*l)}"
+        iyy="${(1.0/12.0)*m*(3.0*r*r + l*l)}"
+        izz="${0.5*m*r*r}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="inertia_cyl_x" params="m r l">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="${l/2.0} 0 0" rpy="0 0 0"/>
+      <inertia
+        ixx="${0.5*m*r*r}"
+        iyy="${(1.0/12.0)*m*(3.0*r*r + l*l)}"
+        izz="${(1.0/12.0)*m*(3.0*r*r + l*l)}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="inertia_box" params="m x y z ox oy oz">
+    <inertial>
+      <mass value="${m}"/>
+      <origin xyz="${ox} ${oy} ${oz}" rpy="0 0 0"/>
+      <inertia
+        ixx="${(1.0/12.0)*m*(y*y+z*z)}"
+        iyy="${(1.0/12.0)*m*(x*x+z*z)}"
+        izz="${(1.0/12.0)*m*(x*x+y*y)}"
+        ixy="0" ixz="0" iyz="0"/>
+    </inertial>
+  </xacro:macro>
+
+
+  <!-- ── 4. BASE MACRO ─────────────────────────────────────────────── -->
+  <xacro:macro name="base">
+    <link name="base_link">
+
+      <!-- Outer shell -->
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="${base_x} ${base_y} ${base_z}"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <!-- Top plate -->
+      <visual>
+        <origin xyz="0 0 ${base_z/2.0 - 0.004}" rpy="0 0 0"/>
+        <geometry><box size="${base_x - 0.006} ${base_y - 0.006} 0.006"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <!-- Battery layer -->
+      <visual>
+        <origin xyz="0 0 ${-base_z/2.0 + 0.0175}" rpy="0 0 0"/>
+        <geometry><box size="${base_x - 0.020} ${base_y - 0.030} 0.033"/></geometry>
+        <material name="black"/>
+      </visual>
+      <!-- Motor driver layer -->
+      <visual>
+        <origin xyz="-0.04 0 ${-base_z/2.0 + 0.048}" rpy="0 0 0"/>
+        <geometry><box size="${base_x*0.45} ${base_y - 0.030} 0.018"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <!-- Power + ESP32 layer -->
+      <visual>
+        <origin xyz="0 0 ${-base_z/2.0 + 0.068}" rpy="0 0 0"/>
+        <geometry><box size="${base_x - 0.020} ${base_y - 0.030} 0.016"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <!-- Raspberry Pi 5 PCB -->
+      <visual>
+        <origin xyz="-0.03 0.03 ${-base_z/2.0 + 0.088}" rpy="0 0 0"/>
+        <geometry><box size="0.085 0.056 0.004"/></geometry>
+        <material name="green"/>
+      </visual>
+      <!-- Arm mount boss -->
+      <visual>
+        <origin xyz="0.0 0.0 ${base_z/2.0 + 0.012}" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.032" length="0.024"/></geometry>
+        <material name="black"/>
+      </visual>
+
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="${base_x} ${base_y} ${base_z}"/></geometry>
+      </collision>
+
+      <inertial>
+        <mass value="${base_mass}"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia
+          ixx="${(1.0/12.0)*base_mass*(base_y*base_y + base_z*base_z)}"
+          iyy="${(1.0/12.0)*base_mass*(base_x*base_x + base_z*base_z)}"
+          izz="${(1.0/12.0)*base_mass*(base_x*base_x + base_y*base_y)}"
+          ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+
+    </link>
+
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>$(find orion_description)/config/ros2_controllers.yaml</parameters>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
+
+
+  <!-- ── 5. WHEELS MACRO ───────────────────────────────────────────── -->
+  <xacro:macro name="mecanum_wheel" params="name x_sign y_sign fdir1_y">
+    <link name="${name}_wheel_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="black"/>
+      </visual>
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius*0.38}" length="${wheel_width+0.002}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <origin xyz="0 0 0"/>
+        <inertia
+          ixx="${(1.0/12.0)*wheel_mass*(3*wheel_radius*wheel_radius+wheel_width*wheel_width)}"
+          iyy="${0.5*wheel_mass*wheel_radius*wheel_radius}"
+          izz="${(1.0/12.0)*wheel_mass*(3*wheel_radius*wheel_radius+wheel_width*wheel_width)}"
+          ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child  link="${name}_wheel_link"/>
+      <origin xyz="${x_sign*wheel_x_off} ${y_sign*wheel_y_off} ${wheel_z_off}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <dynamics damping="0.01" friction="0.01"/>
+    </joint>
+
+    <gazebo reference="${name}_wheel_link">
+      <collision>
+        <surface>
+          <friction>
+            <ode>
+              <mu>1.0</mu>
+              <mu2>0.1</mu2>
+              <fdir1>1 ${fdir1_y} 0 </fdir1>
+            </ode>
+          </friction>
+        </surface>
+      </collision>
+    </gazebo>
+
+  </xacro:macro>
+
+  <xacro:macro name="wheels">
+    <xacro:mecanum_wheel name="front_left"  x_sign="1"  y_sign="1"  fdir1_y="-1"/>
+    <xacro:mecanum_wheel name="front_right" x_sign="1"  y_sign="-1" fdir1_y="1"/>
+    <xacro:mecanum_wheel name="rear_left"   x_sign="-1" y_sign="1"  fdir1_y="1"/>
+    <xacro:mecanum_wheel name="rear_right"  x_sign="-1" y_sign="-1" fdir1_y="-1"/>
+  </xacro:macro>
+
+
+  <!-- ── 6. SENSORS MACRO ──────────────────────────────────────────── -->
+  <xacro:macro name="sensors">
+
+    <!-- Mast -->
+    <link name="lidar_mast_link">
+      <visual>
+        <origin xyz="0 0 ${mast_h/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${mast_r}" length="${mast_h}"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${mast_h/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${mast_r}" length="${mast_h}"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.080"/>
+        <origin xyz="0 0 ${mast_h/2.0}" rpy="0 0 0"/>
+        <inertia
+          ixx="${(1.0/12.0)*0.080*(3.0*mast_r*mast_r + mast_h*mast_h)}"
+          iyy="${(1.0/12.0)*0.080*(3.0*mast_r*mast_r + mast_h*mast_h)}"
+          izz="${0.5*0.080*mast_r*mast_r}"
+          ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <joint name="lidar_mast_joint" type="fixed">
+      <parent link="base_link"/>
+      <child  link="lidar_mast_link"/>
+      <origin xyz="${mast_x} ${mast_y} ${base_z/2.0}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- LiDAR -->
+    <link name="lidar_link">
+      <visual>
+        <origin xyz="0 0 ${lidar_h/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${lidar_r}" length="${lidar_h}"/></geometry>
+        <material name="black"/>
+      </visual>
+      <visual>
+        <origin xyz="0 0 ${lidar_h + 0.009}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${lidar_r - 0.006}" length="0.018"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <visual>
+        <origin xyz="${lidar_r - 0.003} 0 ${lidar_h/2.0}" rpy="0 0 0"/>
+        <geometry><box size="0.004 0.012 ${lidar_h*0.5}"/></geometry>
+        <material name="blue"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${lidar_h/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${lidar_r}" length="${lidar_h}"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="${lidar_m}"/>
+        <origin xyz="0 0 ${lidar_h/2.0}" rpy="0 0 0"/>
+        <inertia
+          ixx="${(1.0/12.0)*lidar_m*(3.0*lidar_r*lidar_r + lidar_h*lidar_h)}"
+          iyy="${(1.0/12.0)*lidar_m*(3.0*lidar_r*lidar_r + lidar_h*lidar_h)}"
+          izz="${0.5*lidar_m*lidar_r*lidar_r}"
+          ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <joint name="lidar_joint" type="fixed">
+      <parent link="lidar_mast_link"/>
+      <child  link="lidar_link"/>
+      <origin xyz="0 0 ${mast_h}" rpy="0 0 0"/>
+    </joint>
+
+    <!-- IMU -->
+    <link name="imu_link">
+      <visual>
+        <origin xyz="0 0 0"/>
+        <geometry>
+          <box size="${imu_xyz} ${imu_xyz} ${imu_xyz}"/>
+        </geometry>
+      </visual>
+      <inertial>
+        <mass value="0.05"/>
+        <origin xyz="0 0 0"/>
+        <inertia ixx="0.001" iyy="0.001" izz="0.001"
+                ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+    <joint name="imu_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="imu_link"/>
+      <origin xyz="0 0 ${base_z}" rpy="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+
+
+  <!-- ── 7. ARM MACRO ──────────────────────────────────────────────── -->
+  <xacro:macro name="arm">
+
+    <!-- Shoulder -->
+    <link name="shoulder_link">
+      <visual>
+        <origin xyz="0 0 ${shoulder_h/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${r0}" length="${shoulder_h}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <visual>
+        <origin xyz="0 0 0.010" rpy="0 0 0"/>
+        <geometry><cylinder radius="${r0*1.9}" length="0.020"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${shoulder_h/2.0}" rpy="0 0 0"/>
+        <geometry><cylinder radius="${r0}" length="${shoulder_h}"/></geometry>
+      </collision>
+      <xacro:inertia_cyl_z m="${m_shoulder}" r="${r0}" l="${shoulder_h}"/>
+    </link>
+
+    <joint name="shoulder_joint" type="revolute">
+      <parent link="base_link"/>
+      <child  link="shoulder_link"/>
+      <origin xyz="0 0 ${base_z/2.0 + arm_mount_h}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.3" upper="1.57" effort="5.0" velocity="0.10"/>
+      <dynamics damping="0.08" friction="0.10"/>
+    </joint>
+
+    <!-- Upper arm -->
+    <link name="upper_arm_link">
+      <visual>
+        <origin xyz="${upper_arm_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r1}" length="${upper_arm_l}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <visual>
+        <origin xyz="${upper_arm_l} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r1*1.7}" length="0.018"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="${upper_arm_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r1}" length="${upper_arm_l}"/></geometry>
+      </collision>
+      <xacro:inertia_cyl_x m="${m_upper_arm}" r="${r1}" l="${upper_arm_l}"/>
+    </link>
+
+    <joint name="elbow_joint" type="revolute">
+      <parent link="shoulder_link"/>
+      <child  link="upper_arm_link"/>
+      <origin xyz="0 0 ${shoulder_h}" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-1.57" upper="0.57" effort="5.0" velocity="0.10"/>
+      <dynamics damping="0.06" friction="0.08"/>
+    </joint>
+
+    <!-- Forearm -->
+    <link name="forearm_link">
+      <visual>
+        <origin xyz="${forearm_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r2}" length="${forearm_l}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <visual>
+        <origin xyz="${forearm_l} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r2*1.6}" length="0.015"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="${forearm_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r2}" length="${forearm_l}"/></geometry>
+      </collision>
+      <xacro:inertia_cyl_x m="${m_forearm}" r="${r2}" l="${forearm_l}"/>
+    </link>
+
+    <joint name="wrist_joint" type="revolute">
+      <parent link="upper_arm_link"/>
+      <child  link="forearm_link"/>
+      <origin xyz="${upper_arm_l} 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="2.7" effort="5.0" velocity="0.10"/>
+      <dynamics damping="0.04" friction="0.06"/>
+    </joint>
+
+    <!-- Hand -->
+    <link name="hand_link">
+      <visual>
+        <origin xyz="${hand_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r3}" length="${hand_l}"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="${hand_l/2.0} 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><cylinder radius="${r3}" length="${hand_l}"/></geometry>
+      </collision>
+      <xacro:inertia_cyl_x m="${m_hand}" r="${r3}" l="${hand_l}"/>
+    </link>
+
+    <joint name="wrist_roll_joint" type="revolute">
+      <parent link="forearm_link"/>
+      <child  link="hand_link"/>
+      <origin xyz="${forearm_l} 0 0" rpy="0 0 0"/>
+      <axis xyz="1 0 0"/>
+      <limit lower="-1.0" upper="1.0" effort="5.0" velocity="0.10"/>
+      <dynamics damping="0.02" friction="0.03"/>
+    </joint>
+
+    <!-- Gripper base -->
+    <link name="gripper_base_link">
+      <visual>
+        <origin xyz="0.018 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.028 0.052 0.018"/></geometry>
+        <material name="dark_grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0.018 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.028 0.052 0.018"/></geometry>
+      </collision>
+      <xacro:inertia_box m="${m_gripper*0.5}" x="0.028" y="0.052" z="0.018"
+                         ox="0.018" oy="0" oz="0"/>
+    </link>
+
+    <joint name="gripper_base_joint" type="fixed">
+      <parent link="hand_link"/>
+      <child  link="gripper_base_link"/>
+      <origin xyz="${hand_l} 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Left gripper finger -->
+    <link name="gripper_left_link">
+      <visual>
+        <origin xyz="0.022 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.044 0.009 0.014"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0.022 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.044 0.009 0.014"/></geometry>
+      </collision>
+      <xacro:inertia_box m="${m_gripper*0.25}" x="0.044" y="0.009" z="0.014"
+                         ox="0.022" oy="0" oz="0"/>
+    </link>
+
+    <joint name="gripper_left_joint" type="prismatic">
+      <parent link="gripper_base_link"/>
+      <child  link="gripper_left_link"/>
+      <origin xyz="0 0.022 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="0.025" effort="5.0" velocity="0.10"/>
+      <dynamics damping="0.01" friction="0.01"/>
+    </joint>
+
+    <!-- Right gripper finger -->
+    <link name="gripper_right_link">
+      <visual>
+        <origin xyz="0.022 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.044 0.009 0.014"/></geometry>
+        <material name="grey"/>
+      </visual>
+      <collision>
+        <origin xyz="0.022 0 0" rpy="0 ${pi/2} 0"/>
+        <geometry><box size="0.044 0.009 0.014"/></geometry>
+      </collision>
+      <xacro:inertia_box m="${m_gripper*0.25}" x="0.044" y="0.009" z="0.014"
+                         ox="0.022" oy="0" oz="0"/>
+    </link>
+
+    <joint name="gripper_right_joint" type="prismatic">
+      <parent link="gripper_base_link"/>
+      <child  link="gripper_right_link"/>
+      <origin xyz="0 -0.022 0" rpy="0 0 0"/>
+      <axis xyz="0 -1 0"/>
+      <limit lower="0.0" upper="0.025" effort="5.0" velocity="0.10"/>
+      <dynamics damping="0.01" friction="0.01"/>
+    </joint>
+
+    <!-- TCP -->
+    <link name="tcp_link"/>
+    <joint name="tcp_joint" type="fixed">
+      <parent link="gripper_base_link"/>
+      <child  link="tcp_link"/>
+      <origin xyz="0.050 0 0" rpy="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+
+
+  <!-- ── 8. INSTANTIATION ──────────────────────────────────────────── -->
   <xacro:base/>
   <xacro:wheels/>
   <xacro:sensors/>
   <xacro:arm/>
-
 
 </robot>
