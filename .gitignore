@@ -11,4 +11,4 @@ orion_ws/log/
 .DS_Store
 **/.DS_Store
 Documenting/Videos/
-
+orion_ws/.roslog/
