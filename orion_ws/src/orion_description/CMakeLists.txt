@@ -29,6 +29,7 @@ install(
     xacro
     launch
     config
+    worlds
   DESTINATION share/${PROJECT_NAME}
 )
 
