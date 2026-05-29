@@ -34,8 +34,8 @@ def generate_launch_description():
     )
     world_arg = DeclareLaunchArgument(
         "world",
-        default_value="empty",
-        description="Gazebo world name (empty = flat plane)",
+        default_value="orion",
+        description="Gazebo world name without .sdf extension (e.g. orion, maze)",
     )
     x_arg = DeclareLaunchArgument("x", default_value="0.0")
     y_arg = DeclareLaunchArgument("y", default_value="0.0")
@@ -72,14 +72,20 @@ def generate_launch_description():
         ],
     )
 
-    world_sdf = os.path.join(pkg_orion, "worlds", "orion.sdf")
+    # World SDF resolved from the "world" launch argument at runtime
+    from launch.substitutions import PathJoinSubstitution as PJS
+    world_sdf_sub = PJS([
+        FindPackageShare("orion_description"),
+        "worlds",
+        [LaunchConfiguration("world"), ".sdf"],
+    ])
 
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(pkg_ros_gz, "launch", "gz_sim.launch.py")
         ),
         launch_arguments={
-            "gz_args": ["-r -v4 ", world_sdf],
+            "gz_args": ["-r -v4 ", world_sdf_sub],
             "on_exit_shutdown": "true",
         }.items(),
     )

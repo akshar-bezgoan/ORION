@@ -23,16 +23,16 @@
 
 
   <!-- ── 2. PROPERTIES ─────────────────────────────────────────────── -->
-  <xacro:property name="base_x"      value="0.280"/>
-  <xacro:property name="base_y"      value="0.320"/>
-  <xacro:property name="base_z"      value="0.105"/>
+  <xacro:property name="base_x"      value="0.320"/>
+  <xacro:property name="base_y"      value="0.350"/>
+  <xacro:property name="base_z"      value="0.080"/>
   <xacro:property name="base_mass"   value="3.5"/>
 
   <xacro:property name="wheel_radius" value="0.050"/>
   <xacro:property name="wheel_width"  value="0.040"/>
   <xacro:property name="wheel_mass"   value="0.3"/>
-  <xacro:property name="wheel_x_off"  value="0.095"/>
-  <xacro:property name="wheel_y_off"  value="0.130"/>
+  <xacro:property name="wheel_x_off"  value="0.112"/>
+  <xacro:property name="wheel_y_off"  value="0.195"/>
   <xacro:property name="wheel_z_off"  value="${-base_z/2.0}"/>
   <xacro:property name="wheel_mu"       value="1.0"/>
   <xacro:property name="wheel_mu2"      value="0.001"/>
@@ -40,8 +40,8 @@
 
   <!-- Sensors -->
   <xacro:property name="mast_r"    value="0.010"/>
-  <xacro:property name="mast_h"    value="0.360"/>
-  <xacro:property name="mast_x"    value="-0.100"/>
+  <xacro:property name="mast_h"    value="0.300"/>
+  <xacro:property name="mast_x"    value="0.000"/>
   <xacro:property name="mast_y"    value="0.000"/>
   <xacro:property name="lidar_r"   value="0.038"/>
   <xacro:property name="lidar_h"   value="0.041"/>
@@ -49,19 +49,19 @@
   <xacro:property name="imu_xyz"   value="0.02"/>
 
   <!-- Arm -->
-  <xacro:property name="arm_mount_h"   value="0.024"/>
-  <xacro:property name="shoulder_h"    value="0.055"/>
-  <xacro:property name="upper_arm_l"   value="0.150"/>
-  <xacro:property name="forearm_l"     value="0.120"/>
+  <xacro:property name="arm_mount_h"   value="0.000"/>
+  <xacro:property name="shoulder_h"    value="0.050"/>
+  <xacro:property name="upper_arm_l"   value="0.220"/>
+  <xacro:property name="forearm_l"     value="0.145"/>
   <xacro:property name="hand_l"        value="0.055"/>
   <xacro:property name="r0"  value="0.020"/>
   <xacro:property name="r1"  value="0.018"/>
   <xacro:property name="r2"  value="0.015"/>
   <xacro:property name="r3"  value="0.012"/>
   <xacro:property name="m_shoulder"   value="0.30"/>
-  <xacro:property name="m_upper_arm"  value="0.24"/>
-  <xacro:property name="m_forearm"    value="0.18"/>
-  <xacro:property name="m_hand"       value="0.10"/>
+  <xacro:property name="m_upper_arm"  value="0.308"/>
+  <xacro:property name="m_forearm"    value="0.199"/>
+  <xacro:property name="m_hand"       value="0.094"/>
   <xacro:property name="m_gripper"    value="0.12"/>
 
 
@@ -121,8 +121,8 @@
       </visual>
       <!-- Battery layer -->
       <visual>
-        <origin xyz="0 0 ${-base_z/2.0 + 0.0175}" rpy="0 0 0"/>
-        <geometry><box size="${base_x - 0.020} ${base_y - 0.030} 0.033"/></geometry>
+        <origin xyz="-0.050 0 ${-base_z/2.0 + 0.0175}" rpy="0 0 0"/>
+        <geometry><box size="${base_x*0.55} ${base_y - 0.030} 0.033"/></geometry>
         <material name="black"/>
       </visual>
       <!-- Motor driver layer -->
@@ -139,16 +139,11 @@
       </visual>
       <!-- Raspberry Pi 5 PCB -->
       <visual>
-        <origin xyz="-0.03 0.03 ${-base_z/2.0 + 0.088}" rpy="0 0 0"/>
+        <origin xyz="-0.07 0.03 ${-base_z/2.0 + 0.060}" rpy="0 0 0"/>
         <geometry><box size="0.085 0.056 0.004"/></geometry>
         <material name="green"/>
       </visual>
-      <!-- Arm mount boss -->
-      <visual>
-        <origin xyz="0.0 0.0 ${base_z/2.0 + 0.012}" rpy="0 0 0"/>
-        <geometry><cylinder radius="0.032" length="0.024"/></geometry>
-        <material name="black"/>
-      </visual>
+      <!-- Arm mount is at front face — no top boss needed -->
 
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -157,7 +152,8 @@
 
       <inertial>
         <mass value="${base_mass}"/>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <!-- CoM offset: electronics packed in rear third of base -->
+        <origin xyz="-0.056 0 0" rpy="0 0 0"/>
         <inertia
           ixx="${(1.0/12.0)*base_mass*(base_y*base_y + base_z*base_z)}"
           iyy="${(1.0/12.0)*base_mass*(base_x*base_x + base_z*base_z)}"
@@ -260,8 +256,8 @@
          so longitudinal traction is equal front and rear, preventing forward jerk -->
     <xacro:mecanum_wheel name="front_left"  x_sign="1"  y_sign="1"  fdir1_y="1"       mu_val="1.0"/>
     <xacro:mecanum_wheel name="front_right" x_sign="1"  y_sign="-1" fdir1_y="-1"      mu_val="1.0"/>
-    <xacro:mecanum_wheel name="rear_left"   x_sign="-1" y_sign="1"  fdir1_y="-0.6175" mu_val="1.2"/>
-    <xacro:mecanum_wheel name="rear_right"  x_sign="-1" y_sign="-1" fdir1_y="0.6175"  mu_val="1.2"/>
+    <xacro:mecanum_wheel name="rear_left"   x_sign="-1" y_sign="1"  fdir1_y="-1" mu_val="1.0"/>
+    <xacro:mecanum_wheel name="rear_right"  x_sign="-1" y_sign="-1" fdir1_y="1"  mu_val="1.0"/>
   </xacro:macro>
 
 
@@ -436,7 +432,9 @@
     <joint name="shoulder_joint" type="revolute">
       <parent link="base_link"/>
       <child  link="shoulder_link"/>
-      <origin xyz="0 0 ${base_z/2.0 + arm_mount_h}" rpy="0 0 0"/>
+      <!-- Arm mounted at front face of base at centre height.
+           base_link origin is at base centre, so x=base_x/2 = front face, z=0 = centre height. -->
+      <origin xyz="${base_x/2.0} 0 0" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
       <limit lower="-0.73" upper="1.30" effort="5.0" velocity="0.10"/>
       <dynamics damping="0.08" friction="0.10"/>
@@ -466,8 +464,9 @@
       <child  link="upper_arm_link"/>
       <origin xyz="0 0 ${shoulder_h}" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <!-- lower=-0.61 keeps forearm tip above base top surface with 10mm clearance -->
-      <limit lower="-0.61" upper="0.57" effort="5.0" velocity="0.10"/>
+      <!-- lower=-0.25 keeps forearm tip above base top surface with 10mm clearance
+           (recalculated for forearm_l=145mm, shoulder_z=90mm) -->
+      <limit lower="-0.25" upper="0.57" effort="5.0" velocity="0.10"/>
       <dynamics damping="0.06" friction="0.08"/>
     </joint>
 
@@ -663,7 +662,7 @@
 
     <joint name="elbow_joint">
       <command_interface name="position">
-        <param name="min">-0.61</param>
+        <param name="min">-0.25</param>
         <param name="max"> 0.57</param>
       </command_interface>
       <command_interface name="effort">
