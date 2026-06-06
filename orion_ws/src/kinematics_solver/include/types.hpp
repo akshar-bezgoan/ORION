@@ -3,8 +3,6 @@
 #include <Eigen/Dense>
 #include <vector>
 
-namespace orion {
-
 using JointVector = Eigen::VectorXd;
 
 using PoseMatrix = Eigen::Matrix4d;
@@ -19,4 +17,3 @@ struct IKCandidates {
     std::vector<JointVector> solutions;
 };
 
-}

@@ -2,40 +2,36 @@
 
 RobotModel::RobotModel()
 {
-    shoulder_mount_x = 0.160;  
-    shoulder_h       = 0.050;
-    upper_arm_l      = 0.220;
-    forearm_l        = 0.145;
-    gripper_l        = 0.055;
-    gripper_tcp      = 0.050;
+    //Link lengths — values match orion.xacro properties (lines 66-69)
+    shoulder_h_   = 0.050;  // xacro: shoulder_h   (was 0.090)
+    upper_arm_l_  = 0.220;  // xacro: upper_arm_l  (was 0.145)
+    forearm_l_    = 0.145;  // xacro: forearm_l     (unchanged)
+    gripper_l_    = 0.055;  // xacro: gripper_l     (was 0.060)
 
-    shoulder_m  = 0.300;
-    upper_arm_m = 0.308;
-    forearm_m   = 0.199;
-    gripper_m   = 0.120;
+    //Masses — all already match xacro (lines 79-82)
+    shoulder_m_   = 0.300;  // xacro: m_shoulder
+    upper_arm_m_  = 0.308;  // xacro: m_upper_arm
+    forearm_m_    = 0.199;  // xacro: m_forearm
+    gripper_m_    = 0.120;  // xacro: m_gripper
 
-    joint_limits.resize(DOF);
-    joint_limits[0] = { -0.73,  1.30 };  // shoulder_joint
-    joint_limits[1] = { -0.25,  0.57 };  // elbow_joint
-    joint_limits[2] = {  0.00,  2.70 };  // wrist_joint
-    joint_limits[3] = { -1.57,  1.57 };  // gripper_pitch_joint
+    joint_limits_.resize(DOF);
 
-    joint_dynamics.resize(DOF);
-    joint_dynamics[0] = { 0.08, 0.10 };  // shoulder
-    joint_dynamics[1] = { 0.06, 0.08 };  // elbow
-    joint_dynamics[2] = { 0.04, 0.06 };  // wrist
-    joint_dynamics[3] = { 0.02, 0.03 };  // gripper_pitch
-
-    arm_effort = 5.0;
-    arm_vel    = 1.0;
+    // Joint limits — all already match xacro (lines 85-98)
+    joint_limits_[0] = {-0.73, 1.30};  // shoulder  (xacro: shoulder_lo/hi)
+    joint_limits_[1] = {-0.25, 0.57};  // elbow     (xacro: elbow_lo/hi)
+    joint_limits_[2] = { 0.00, 2.70};  // wrist     (xacro: wrist_lo/hi)
+    joint_limits_[3] = {-1.00, 1.00};  // wrist roll (xacro: gr_lo/hi ±1.57; kept as-is — no exact match)
 }
 
-bool RobotModel::isWithinLimits(const Eigen::Vector4d& q) const
-{
-    for (int i = 0; i < DOF; ++i)
-        if (q[i] < joint_limits[i].min || q[i] > joint_limits[i].max)
+int RobotModel::getDOF() const {
+    return DOF;
+}
+
+bool RobotModel::isWithinLimits(const Eigen::Vector4d& q) const {
+    for (int i = 0; i < DOF; i++) {
+        if (q[i] < joint_limits_[i].min || q[i] > joint_limits_[i].max) {
             return false;
+        }
+    }
     return true;
 }
-
-int RobotModel::getDOF() const { return DOF; }
