@@ -12,3 +12,7 @@ orion_ws/log/
 **/.DS_Store
 Documenting/Videos/
 orion_ws/.roslog/
+
+# kinematics_solver build files
+orion_ws/src/kinematics_solver/build/
+
