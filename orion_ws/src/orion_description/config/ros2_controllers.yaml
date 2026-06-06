@@ -7,7 +7,7 @@ controller_manager:
 
     # mecanum_drive_controller replaced by custom C++ node (mecanum_drive_node).
     # The node subscribes to /cmd_vel and publishes Float64MultiArray to
-    # /wheel_velocity_commands, which is consumed by this forward_command_controller.
+    # /wheel_velocity_controller/commands, consumed by this forward_command_controller.
     wheel_velocity_controller:
       type: forward_command_controller/ForwardCommandController
 
@@ -33,6 +33,8 @@ wheel_velocity_controller:
 arm_controller:
   ros__parameters:
 
+    # Joints MUST match the robot defined in orion.xacro:
+    #   shoulder_joint -> elbow_joint -> wrist_joint -> wrist_roll_joint
     joints:
       - shoulder_joint
       - elbow_joint
@@ -46,10 +48,13 @@ arm_controller:
       - velocity
 
     state_publish_rate: 50.0
-    action_monitor_rate: 20.0  
-    allow_partial_joints_goal: false  
-    allow_integration_in_goal_trajectories: false  
+    action_monitor_rate: 20.0
+    allow_partial_joints_goal: false
+    allow_integration_in_goal_trajectories: false
 
+    # NOTE: with a position-only command interface the JTC forwards setpoints
+    # straight to the hardware (which closes the loop), so these gains are only
+    # consulted if you switch arm_controller to an effort command interface.
     gains:
       shoulder_joint:
         p: 20.0
@@ -70,12 +75,11 @@ arm_controller:
         i_clamp_max:  5.0
         i_clamp_min: -5.0
       wrist_roll_joint:
-        p: 10.0
+        p: 12.0
         i:  0.0
         d: 3.0
         i_clamp_max:  5.0
         i_clamp_min: -5.0
-
 
     constraints:
       stopped_velocity_tolerance: 0.05
@@ -97,7 +101,7 @@ gripper_controller:
   ros__parameters:
 
     joints:
-      - gripper_left_joint       
+      - gripper_left_joint
     command_interfaces:
       - position
     state_interfaces:
@@ -119,11 +123,11 @@ gripper_controller:
         i_clamp_min: -2.0
 
     constraints:
-      stopped_velocity_tolerance: 0.005   
+      stopped_velocity_tolerance: 0.005
       goal_time: 0.0
       gripper_left_joint:
-        trajectory: 0.005  
-        goal:       0.001   
+        trajectory: 0.005
+        goal:       0.001
 
 arm_effort_controller:
   ros__parameters:

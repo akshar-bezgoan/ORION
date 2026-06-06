@@ -39,7 +39,8 @@ def generate_launch_description():
     )
     x_arg = DeclareLaunchArgument("x", default_value="0.0")
     y_arg = DeclareLaunchArgument("y", default_value="0.0")
-    z_arg = DeclareLaunchArgument("z", default_value="0.1025")  # wheel_radius(0.05) + base_z/2(0.0525)
+    # wheel_radius(0.05) + base_z/2(0.040) = 0.090 -> wheel sphere flush with ground
+    z_arg = DeclareLaunchArgument("z", default_value="0.090")
 
     use_sim_time = LaunchConfiguration("use_sim_time")
     world        = LaunchConfiguration("world")
@@ -73,8 +74,7 @@ def generate_launch_description():
     )
 
     # World SDF resolved from the "world" launch argument at runtime
-    from launch.substitutions import PathJoinSubstitution as PJS
-    world_sdf_sub = PJS([
+    world_sdf_sub = PathJoinSubstitution([
         FindPackageShare("orion_description"),
         "worlds",
         [LaunchConfiguration("world"), ".sdf"],
@@ -114,8 +114,8 @@ def generate_launch_description():
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
             "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
             "/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU",
-            "/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V",
-            # Pickup object pose: gz Pose_V -> ROS 2 geometry_msgs/PoseArray
+            # NOTE: /tf omitted — mecanum_drive_node publishes odom->base_link TF
+            # directly; bridging gz.msgs.Pose_V would create a conflicting second tree.
             "/model/pickup_object/pose@geometry_msgs/msg/PoseArray[gz.msgs.Pose_V",
         ],
     )
@@ -133,16 +133,26 @@ def generate_launch_description():
         parameters=[{"use_sim_time": use_sim_time}],
     )
 
-    mecanum_controller_spawner = Node(
+    wheel_velocity_controller_spawner = Node(
         package="controller_manager",
         executable="spawner",
-        name="mecanum_controller_spawner",
+        name="wheel_velocity_controller_spawner",
         output="screen",
         arguments=[
-            "mecanum_controller",
+            "wheel_velocity_controller",
             "--controller-manager", "/controller_manager",
             "--controller-manager-timeout", "30",
         ],
+        parameters=[{"use_sim_time": use_sim_time}],
+    )
+
+    # Custom mecanum drive node: subscribes /cmd_vel, publishes wheel velocities
+    # to /wheel_velocity_controller/commands (ForwardCommandController).
+    mecanum_drive = Node(
+        package="mecanum_drive",
+        executable="mecanum_drive_node",
+        name="mecanum_drive_node",
+        output="screen",
         parameters=[{"use_sim_time": use_sim_time}],
     )
 
@@ -181,7 +191,7 @@ def generate_launch_description():
             "arm_effort_controller",
             "--controller-manager", "/controller_manager",
             "--controller-manager-timeout", "30",
-            "--inactive", 
+            "--inactive",
         ],
         parameters=[{"use_sim_time": use_sim_time}],
     )
@@ -197,7 +207,7 @@ def generate_launch_description():
         OnProcessStart(
             target_action=robot_state_publisher,
             on_start=[
-                TimerAction(period=5.0, actions=[spawn_robot]), 
+                TimerAction(period=5.0, actions=[spawn_robot]),
             ],
         )
     )
@@ -206,7 +216,7 @@ def generate_launch_description():
         OnProcessStart(
             target_action=robot_state_publisher,
             on_start=[
-                TimerAction(period=3.0, actions=[ros_gz_bridge]), 
+                TimerAction(period=3.0, actions=[ros_gz_bridge]),
             ],
         )
     )
@@ -221,13 +231,13 @@ def generate_launch_description():
     mecanum_controller = RegisterEventHandler(
         OnProcessExit(
             target_action=joint_state_broadcaster_spawner,
-            on_exit=[mecanum_controller_spawner],
+            on_exit=[wheel_velocity_controller_spawner],
         )
     )
 
     arm_controller = RegisterEventHandler(
         OnProcessExit(
-            target_action=mecanum_controller_spawner,
+            target_action=wheel_velocity_controller_spawner,
             on_exit=[arm_controller_spawner],
         )
     )
@@ -255,6 +265,7 @@ def generate_launch_description():
             z_arg,
 
             robot_state_publisher,
+            mecanum_drive,
 
             gz_start,
             robot_spawner,

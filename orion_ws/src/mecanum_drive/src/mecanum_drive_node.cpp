@@ -3,8 +3,8 @@
  *
  * Custom mecanum drive controller for ORION.
  * Subscribes to /cmd_vel (geometry_msgs/Twist) and publishes individual
- * wheel velocity commands to the ros2_control hardware interfaces via
- * std_msgs/Float64MultiArray on /wheel_velocity_commands.
+ * wheel velocity commands to a forward_command_controller via
+ * std_msgs/Float64MultiArray on /wheel_velocity_controller/commands.
  *
  * Also publishes odometry on /odom and broadcasts the odom->base_link TF.
  *
@@ -25,6 +25,7 @@
 
 #include "mecanum_drive/mecanum_drive_node.hpp"
 
+#include <algorithm>   // std::max (initializer-list overload)
 #include <cmath>
 #include <chrono>
 
@@ -53,10 +54,11 @@ MecanumDriveNode::MecanumDriveNode(const rclcpp::NodeOptions & options)
 
   // ── Publishers ──────────────────────────────────────────────────────────
   // Publishes [fl, fr, rl, rr] rad/s to the forward_command_controller
-  // that sits on the four wheel velocity interfaces.
+  // that sits on the four wheel velocity interfaces. Must be reliable to
+  // match the ForwardCommandController's command subscription QoS.
   wheel_vel_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>(
     "/wheel_velocity_controller/commands",
-    rclcpp::QoS(rclcpp::KeepLast(10)).best_effort().durability_volatile());
+    rclcpp::SystemDefaultsQoS());
 
   odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(
     "/odom", rclcpp::SystemDefaultsQoS());
