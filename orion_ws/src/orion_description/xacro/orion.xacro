@@ -4,17 +4,14 @@
        xmlns:gz="http://gazebosim.org/schema">
   <xacro:arg name="controllers_file" default="config/ros2_controllers.yaml"/>
 
-  <!-- ════════════════════════════════════════════════════════════════════
-       1.  ALL CONSTANTS
-       ════════════════════════════════════════════════════════════════════ -->
-
+<!--CONSTANTS-->
   <!-- ── Base ─────────────────────────────────────────────────────────── -->
   <xacro:property name="base_x"    value="0.320"/>  <!-- length  [m] -->
   <xacro:property name="base_y"    value="0.350"/>  <!-- width   [m] -->
   <xacro:property name="base_z"    value="0.080"/>  <!-- height  [m] -->
   <xacro:property name="base_mass" value="3.5"/>    <!-- kg -->
 
-  <!-- ── Wheels ───────────────────────────────────────────────────────── -->
+  <!-- Wheels -->
   <xacro:property name="wheel_radius" value="0.050"/>              <!-- m -->
   <xacro:property name="wheel_width"  value="0.040"/>              <!-- m -->
   <xacro:property name="wheel_mass"   value="0.3"/>                <!-- kg -->
@@ -24,7 +21,7 @@
   <xacro:property name="wheel_mu"     value="1.0"/>                <!-- longitudinal friction -->
   <xacro:property name="wheel_mu2"    value="0.001"/>              <!-- lateral friction -->
 
-  <!-- ── Sensors ──────────────────────────────────────────────────────── -->
+<!-- Sensors -->
   <xacro:property name="mast_r"  value="0.010"/>   <!-- LiDAR mast radius  [m] -->
   <xacro:property name="mast_h"  value="0.300"/>   <!-- LiDAR mast height  [m] -->
   <xacro:property name="mast_x"  value="0.000"/>   <!-- mast X offset from base centre [m] -->
@@ -33,32 +30,6 @@
   <xacro:property name="lidar_h" value="0.041"/>   <!-- LiDAR body height  [m] -->
   <xacro:property name="lidar_m" value="0.185"/>   <!-- LiDAR mass         [kg] -->
   <xacro:property name="imu_xyz" value="0.02"/>    <!-- IMU cube side      [m] -->
-
-  <!-- ── Arm geometry ─────────────────────────────────────────────────── -->
-  <!--
-    Chain: base_link
-             └─ shoulder_joint (revolute, Y-axis)
-                  └─ shoulder_link  (vertical stub)
-                       └─ elbow_joint (revolute, Y-axis)
-                            └─ upper_arm_link  (extends along +X)
-                                 └─ wrist_joint (revolute, Y-axis)
-                                      └─ forearm_link  (extends along +X)
-                                           └─ gripper_pitch_joint  ─┐
-                                                └─ gripper_pitch_link │ ball-and-socket
-                                                     └─ gripper_yaw_joint │ (3 × revolute,
-                                                          └─ gripper_yaw_link │  zero-length
-                                                               └─ gripper_roll_joint ┘  links)
-                                                                    └─ gripper_base_link
-                                                                         ├─ gripper_left_joint
-                                                                         └─ gripper_right_joint
-
-    All arm revolute axes are +Y (rotation in the sagittal / x-z plane).
-    Ball-and-socket is decomposed into pitch (+Y), yaw (+Z), roll (+X) at the
-    same physical point — this is the standard URDF approximation of a spherical
-    joint, which has no native URDF type.
-  -->
-
-  <!-- Arm mount: shoulder joint sits at base front face, vertically centred -->
   <xacro:property name="shoulder_mount_x" value="${base_x/2.0}"/>  <!-- = 0.160 m -->
   <xacro:property name="shoulder_mount_z" value="0.0"/>            <!-- base_link origin is mid-height -->
 
