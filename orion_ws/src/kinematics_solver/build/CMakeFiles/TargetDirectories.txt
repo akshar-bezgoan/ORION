@@ -1,3 +1,0 @@
-/Users/aksharbezgoan/Documents/Computing/ORION/orion_ws/src/kinematics_solver/build/CMakeFiles/solver.dir
-/Users/aksharbezgoan/Documents/Computing/ORION/orion_ws/src/kinematics_solver/build/CMakeFiles/edit_cache.dir
-/Users/aksharbezgoan/Documents/Computing/ORION/orion_ws/src/kinematics_solver/build/CMakeFiles/rebuild_cache.dir
