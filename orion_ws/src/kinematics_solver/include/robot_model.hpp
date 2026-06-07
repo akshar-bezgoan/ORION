@@ -4,6 +4,7 @@
 #include <vector>
 
 class ForwardKinematics; // forward declare so friend compiles
+class InverseKinematics; // forward declare so friend compiles
 
 class RobotModel {
 public:
@@ -36,4 +37,5 @@ private:
     std::vector<JointLimit> joint_limits_; // size = DOF
 
     friend class ForwardKinematics;
+    friend class InverseKinematics;
 };

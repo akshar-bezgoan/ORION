@@ -1,5 +1,4 @@
 #pragma once
-
 #include <Eigen/Dense>
 #include <vector>
 
@@ -7,8 +6,10 @@ using JointVector = Eigen::VectorXd;
 
 using PoseMatrix = Eigen::Matrix4d;
 
+using Position = Eigen::Vector3d;
+
 struct IKResult {
-    JointVector joints;   
+    JointVector joints;
     bool success;
     double error;
 };
@@ -16,4 +17,3 @@ struct IKResult {
 struct IKCandidates {
     std::vector<JointVector> solutions;
 };
-

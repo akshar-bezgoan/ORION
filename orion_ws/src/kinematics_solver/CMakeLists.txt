@@ -12,7 +12,8 @@ include_directories(
 )
 
 add_executable(solver
-    src/test_fk.cpp
+    src/ik_playground.cpp
+    src/inverse_kinematics.cpp
     src/forward_kinematics.cpp
     src/robot_model.cpp
 )

@@ -4,7 +4,5 @@
 
 class ForwardKinematics{
     public:
-        PoseMatrix solve(
-            const RobotModel& model,
-            const JointVector& q) const;
+        PoseMatrix solve(const RobotModel& model, const JointVector& q) const;
 };
