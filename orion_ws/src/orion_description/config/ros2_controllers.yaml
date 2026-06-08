@@ -5,9 +5,6 @@ controller_manager:
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    # mecanum_drive_controller replaced by custom C++ node (mecanum_drive_node).
-    # The node subscribes to /cmd_vel and publishes Float64MultiArray to
-    # /wheel_velocity_controller/commands, consumed by this forward_command_controller.
     wheel_velocity_controller:
       type: forward_command_controller/ForwardCommandController
 
@@ -20,7 +17,6 @@ controller_manager:
     arm_effort_controller:
       type: forward_command_controller/ForwardCommandController
 
-# wheel_velocity_controller: receives [fl, fr, rl, rr] rad/s from mecanum_drive_node
 wheel_velocity_controller:
   ros__parameters:
     joints:
@@ -32,9 +28,6 @@ wheel_velocity_controller:
 
 arm_controller:
   ros__parameters:
-
-    # Joints MUST match the robot defined in orion.xacro:
-    #   shoulder_joint -> elbow_joint -> wrist_joint -> wrist_roll_joint
     joints:
       - shoulder_joint
       - elbow_joint
@@ -52,9 +45,6 @@ arm_controller:
     allow_partial_joints_goal: false
     allow_integration_in_goal_trajectories: false
 
-    # NOTE: with a position-only command interface the JTC forwards setpoints
-    # straight to the hardware (which closes the loop), so these gains are only
-    # consulted if you switch arm_controller to an effort command interface.
     gains:
       shoulder_joint:
         p: 20.0

@@ -24,38 +24,37 @@ from launch_ros.substitutions import FindPackageShare
 
 def generate_launch_description():
 
-    pkg_orion     = get_package_share_directory("orion_description")
-    pkg_ros_gz    = get_package_share_directory("ros_gz_sim")
+    orion_description     = get_package_share_directory("orion_description")
+    ros_gz_sim    = get_package_share_directory("ros_gz_sim")
 
     use_sim_time_arg = DeclareLaunchArgument(
         "use_sim_time",
         default_value="true",
         description="Use Gazebo simulation clock",
     )
-    world_arg = DeclareLaunchArgument(
+    world_name = DeclareLaunchArgument(
         "world",
         default_value="orion",
         description="Gazebo world name without .sdf extension (e.g. orion, maze)",
     )
-    x_arg = DeclareLaunchArgument("x", default_value="0.0")
-    y_arg = DeclareLaunchArgument("y", default_value="0.0")
-    # wheel_radius(0.05) + base_z/2(0.040) = 0.090 -> wheel sphere flush with ground
-    z_arg = DeclareLaunchArgument("z", default_value="0.090")
+    x = DeclareLaunchArgument("x", default_value="0.0")
+    y = DeclareLaunchArgument("y", default_value="0.0")
+    z = DeclareLaunchArgument("z", default_value="0.090")
 
     use_sim_time = LaunchConfiguration("use_sim_time")
-    world        = LaunchConfiguration("world")
+    world = LaunchConfiguration("world")
 
-    xacro_file = os.path.join(pkg_orion, "xacro", "orion.xacro")
-    controllers_file = os.path.join(pkg_orion, "config", "ros2_controllers.yaml")
+    xacrofile = os.path.join(orion_description, "xacro", "orion.xacro")
+    controllersfile = os.path.join(orion_description, "config", "ros2_controllers.yaml")
 
     robot_description_content = Command(
         [
             FindExecutable(name="xacro"),
             " ",
-            xacro_file,
+            xacrofile,
             " ",
             "controllers_file:=",
-            controllers_file,
+            controllersfile,
         ]
     )
     robot_description = {
@@ -73,7 +72,6 @@ def generate_launch_description():
         ],
     )
 
-    # World SDF resolved from the "world" launch argument at runtime
     world_sdf_sub = PathJoinSubstitution([
         FindPackageShare("orion_description"),
         "worlds",
@@ -82,10 +80,10 @@ def generate_launch_description():
 
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_ros_gz, "launch", "gz_sim.launch.py")
+            os.path.join(ros_gz_sim, "launch", "gz_sim.launch.py")
         ),
         launch_arguments={
-            "gz_args": ["-r -v4 ", world_sdf_sub],
+            "gzs": ["-r -v4 ", world_sdf_sub],
             "on_exit_shutdown": "true",
         }.items(),
     )
@@ -114,8 +112,6 @@ def generate_launch_description():
             "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
             "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
             "/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU",
-            # NOTE: /tf omitted — mecanum_drive_node publishes odom->base_link TF
-            # directly; bridging gz.msgs.Pose_V would create a conflicting second tree.
             "/model/pickup_object/pose@geometry_msgs/msg/PoseArray[gz.msgs.Pose_V",
         ],
     )
@@ -146,8 +142,6 @@ def generate_launch_description():
         parameters=[{"use_sim_time": use_sim_time}],
     )
 
-    # Custom mecanum drive node: subscribes /cmd_vel, publishes wheel velocities
-    # to /wheel_velocity_controller/commands (ForwardCommandController).
     mecanum_drive = Node(
         package="mecanum_drive",
         executable="mecanum_drive_node",
@@ -259,10 +253,10 @@ def generate_launch_description():
     return LaunchDescription(
         [
             use_sim_time_arg,
-            world_arg,
-            x_arg,
-            y_arg,
-            z_arg,
+            world_name,
+            x,
+            y,
+            z,
 
             robot_state_publisher,
             mecanum_drive,

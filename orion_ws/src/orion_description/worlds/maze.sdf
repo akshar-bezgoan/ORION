@@ -1,33 +1,5 @@
-<?xml version="1.0" ?>
-<!--
-  maze.sdf  —  Gazebo Harmonic (gz-sim 8) maze world for ORION.
-
-  Layout (each cell = 1.0 m, walls 0.15 m thick, 0.40 m tall):
-
-    +--+--+--+--+--+--+--+--+
-    |        |           |  |
-    +  +--+  +  +--+--+  +  +
-    |  |  |     |        |  |
-    +  +  +--+--+  +--+--+  +
-    |        |     |        |
-    +--+--+  +  +--+  +--+--+
-    |        |        |     |
-    +  +--+--+  +--+--+  +  +
-    |  |        |     |     |
-    +  +  +--+--+  +  +--+  +
-    |           |           |
-    +--+--+--+--+--+--+--+--+
-
-  Robot spawns at (0.5, -5.5) facing north.
-  Goal marker at (7.5, -0.5).
-
-  Coordinate system: X = east, Y = north, Z = up.
-  Origin at SW corner of maze.
--->
 <sdf version="1.9">
   <world name="maze">
-
-    <!-- ── Physics ──────────────────────────────────────────────────── -->
     <physics name="1ms" type="ode">
       <max_step_size>0.001</max_step_size>
       <real_time_factor>1.0</real_time_factor>
@@ -40,14 +12,11 @@
         </constraints>
       </ode>
     </physics>
-
-    <!-- ── Required system plugins ──────────────────────────────────── -->
     <plugin filename="gz-sim-physics-system"     name="gz::sim::systems::Physics"/>
     <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
     <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
     <plugin filename="gz-sim-contact-system"     name="gz::sim::systems::Contact"/>
 
-    <!-- ── Lighting ─────────────────────────────────────────────────── -->
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows>
       <pose>0 0 20 0 0 0</pose>
@@ -57,7 +26,6 @@
       <direction>-0.3 0.2 -0.9</direction>
     </light>
 
-    <!-- ── Ground plane ─────────────────────────────────────────────── -->
     <model name="ground_plane">
       <static>true</static>
       <link name="link">
@@ -74,15 +42,6 @@
       </link>
     </model>
 
-    <!-- ══════════════════════════════════════════════════════════════ -->
-    <!-- WALL MACRO: each wall is a static box.                        -->
-    <!-- Naming: w_<row>_<col>_<h|v> where h=horizontal, v=vertical   -->
-    <!-- Wall dims: thickness=0.15m, height=0.40m                     -->
-    <!-- Long walls span 1.0m cell + 0.15m thickness = 1.15m          -->
-    <!-- ══════════════════════════════════════════════════════════════ -->
-
-    <!-- ── Outer boundary ───────────────────────────────────────────── -->
-    <!-- South wall (y=0) -->
     <model name="wall_south">
       <static>true</static>
       <pose>4.0 0.075 0.2 0 0 0</pose>
@@ -95,7 +54,6 @@
       </link>
     </model>
 
-    <!-- North wall (y=6) -->
     <model name="wall_north">
       <static>true</static>
       <pose>4.0 5.925 0.2 0 0 0</pose>
@@ -108,7 +66,6 @@
       </link>
     </model>
 
-    <!-- West wall (x=0) -->
     <model name="wall_west">
       <static>true</static>
       <pose>0.075 3.0 0.2 0 0 0</pose>
@@ -121,7 +78,6 @@
       </link>
     </model>
 
-    <!-- East wall (x=8) -->
     <model name="wall_east">
       <static>true</static>
       <pose>7.925 3.0 0.2 0 0 0</pose>
@@ -134,8 +90,6 @@
       </link>
     </model>
 
-    <!-- ── Interior walls ───────────────────────────────────────────── -->
-    <!-- Row 0 (y ~= 1.0) -->
     <model name="wi_r0_c0_h">
       <static>true</static><pose>1.075 1.075 0.2 0 0 0</pose>
       <link name="link">
@@ -163,7 +117,6 @@
       </link>
     </model>
 
-    <!-- Row 1 (y ~= 2.0) -->
     <model name="wi_r1_c1_h">
       <static>true</static><pose>2.075 2.075 0.2 0 0 0</pose>
       <link name="link">
@@ -182,7 +135,6 @@
       </link>
     </model>
 
-    <!-- Row 2 (y ~= 3.0) -->
     <model name="wi_r2_c0_h">
       <static>true</static><pose>1.075 3.075 0.2 0 0 0</pose>
       <link name="link">
@@ -201,7 +153,6 @@
       </link>
     </model>
 
-    <!-- Row 3 (y ~= 4.0) -->
     <model name="wi_r3_c1_h">
       <static>true</static><pose>2.075 4.075 0.2 0 0 0</pose>
       <link name="link">
@@ -220,7 +171,6 @@
       </link>
     </model>
 
-    <!-- Row 4 (y ~= 5.0) -->
     <model name="wi_r4_c2_h">
       <static>true</static><pose>3.075 5.075 0.2 0 0 0</pose>
       <link name="link">
@@ -230,7 +180,6 @@
       </link>
     </model>
 
-    <!-- Vertical interior walls -->
     <model name="wi_c1_r0_v">
       <static>true</static><pose>1.075 0.5 0.2 0 0 0</pose>
       <link name="link">
@@ -330,7 +279,6 @@
       </link>
     </model>
 
-    <!-- ── Goal marker — bright green cylinder at NE corner ─────────── -->
     <model name="goal_marker">
       <static>true</static>
       <pose>7.5 5.5 0.05 0 0 0</pose>
@@ -343,11 +291,9 @@
             <emissive>0.0 0.4 0.0 1</emissive>
           </material>
         </visual>
-        <!-- No collision — robot can drive over it to "reach" the goal -->
       </link>
     </model>
 
-    <!-- ── Start marker — blue cylinder at SW corner ────────────────── -->
     <model name="start_marker">
       <static>true</static>
       <pose>0.5 0.5 0.05 0 0 0</pose>
