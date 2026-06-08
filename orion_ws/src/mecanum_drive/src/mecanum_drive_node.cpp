@@ -1,28 +1,3 @@
-/**
- * mecanum_drive_node.cpp
- *
- * Custom mecanum drive controller for ORION.
- * Subscribes to /cmd_vel (geometry_msgs/Twist) and publishes individual
- * wheel velocity commands to a forward_command_controller via
- * std_msgs/Float64MultiArray on /wheel_velocity_controller/commands.
- *
- * Also publishes odometry on /odom and broadcasts the odom->base_link TF.
- *
- * Mecanum kinematics (X-pattern, rollers at 45 deg):
- *   v_fl = (vx - vy - (lx+ly)*wz) / r
- *   v_fr = (vx + vy + (lx+ly)*wz) / r
- *   v_rl = (vx + vy - (lx+ly)*wz) / r
- *   v_rr = (vx - vy + (lx+ly)*wz) / r
- *
- * Where:
- *   vx  = forward velocity (m/s)
- *   vy  = lateral velocity (m/s, positive = left)
- *   wz  = yaw rate (rad/s, positive = CCW)
- *   lx  = wheel_x_off (m)  - half wheelbase
- *   ly  = wheel_y_off (m)  - half track width
- *   r   = wheel_radius (m)
- */
-
 #include "mecanum_drive/mecanum_drive_node.hpp"
 
 #include <algorithm>   // std::max (initializer-list overload)
@@ -52,10 +27,7 @@ MecanumDriveNode::MecanumDriveNode(const rclcpp::NodeOptions & options)
     "MecanumDriveNode: r=%.3f lx=%.3f ly=%.3f lx+ly=%.3f",
     wheel_radius_, wheel_x_off_, wheel_y_off_, lx_plus_ly_);
 
-  // ── Publishers ──────────────────────────────────────────────────────────
-  // Publishes [fl, fr, rl, rr] rad/s to the forward_command_controller
-  // that sits on the four wheel velocity interfaces. Must be reliable to
-  // match the ForwardCommandController's command subscription QoS.
+  //Pubs
   wheel_vel_pub_ = create_publisher<std_msgs::msg::Float64MultiArray>(
     "/wheel_velocity_controller/commands",
     rclcpp::SystemDefaultsQoS());
@@ -63,7 +35,7 @@ MecanumDriveNode::MecanumDriveNode(const rclcpp::NodeOptions & options)
   odom_pub_ = create_publisher<nav_msgs::msg::Odometry>(
     "/odom", rclcpp::SystemDefaultsQoS());
 
-  // ── Subscribers ─────────────────────────────────────────────────────────
+  //Subs
   cmd_vel_sub_ = create_subscription<geometry_msgs::msg::Twist>(
     "/cmd_vel", rclcpp::SystemDefaultsQoS(),
     std::bind(&MecanumDriveNode::cmdVelCallback, this, std::placeholders::_1));
@@ -72,18 +44,15 @@ MecanumDriveNode::MecanumDriveNode(const rclcpp::NodeOptions & options)
     "/joint_states", rclcpp::SystemDefaultsQoS(),
     std::bind(&MecanumDriveNode::jointStateCallback, this, std::placeholders::_1));
 
-  // ── TF broadcaster ──────────────────────────────────────────────────────
   if (publish_tf_) {
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
   }
 
-  // ── Odometry state ──────────────────────────────────────────────────────
   odom_x_   = 0.0;
   odom_y_   = 0.0;
   odom_yaw_ = 0.0;
   last_odom_time_ = now();
 
-  // ── Timeout watchdog — stops wheels if no /cmd_vel received ─────────────
   auto period = std::chrono::duration<double>(0.05);  // 20 Hz
   watchdog_timer_ = create_wall_timer(
     std::chrono::duration_cast<std::chrono::nanoseconds>(period),
@@ -93,7 +62,6 @@ MecanumDriveNode::MecanumDriveNode(const rclcpp::NodeOptions & options)
   cmd_active_    = false;
 }
 
-// ── /cmd_vel callback ──────────────────────────────────────────────────────
 void MecanumDriveNode::cmdVelCallback(
   const geometry_msgs::msg::Twist::SharedPtr msg)
 {
@@ -102,11 +70,9 @@ void MecanumDriveNode::cmdVelCallback(
   publishWheelVelocities(msg->linear.x, msg->linear.y, msg->angular.z);
 }
 
-// ── /joint_states callback (for odometry) ─────────────────────────────────
 void MecanumDriveNode::jointStateCallback(
   const sensor_msgs::msg::JointState::SharedPtr msg)
 {
-  // Extract wheel velocities by joint name
   double v_fl = 0.0, v_fr = 0.0, v_rl = 0.0, v_rr = 0.0;
   bool fl = false, fr = false, rl = false, rr = false;
 
@@ -122,14 +88,12 @@ void MecanumDriveNode::jointStateCallback(
 
   if (!(fl && fr && rl && rr)) return;
 
-  // Forward kinematics: chassis velocities from wheel velocities
   const double r = wheel_radius_;
   const double lxly = lx_plus_ly_;
   double vx  = r * ( v_fl + v_fr + v_rl + v_rr) / 4.0;
   double vy  = r * (-v_fl + v_fr + v_rl - v_rr) / 4.0;
   double wz  = r * (-v_fl + v_fr - v_rl + v_rr) / (4.0 * lxly);
 
-  // Integrate odometry
   auto t_now = now();
   double dt = (t_now - last_odom_time_).seconds();
   last_odom_time_ = t_now;
@@ -148,7 +112,6 @@ void MecanumDriveNode::jointStateCallback(
   }
 }
 
-// ── Watchdog: zero wheels if cmd_vel goes silent ───────────────────────────
 void MecanumDriveNode::watchdogCallback()
 {
   if (!cmd_active_) return;
@@ -160,19 +123,17 @@ void MecanumDriveNode::watchdogCallback()
   }
 }
 
-// ── Core kinematics → wheel velocity publisher ────────────────────────────
 void MecanumDriveNode::publishWheelVelocities(double vx, double vy, double wz)
 {
   const double r    = wheel_radius_;
   const double lxly = lx_plus_ly_;
 
-  // Inverse kinematics
+  //mecanum wheel formula
   double v_fl = (vx - vy - lxly * wz) / r;
   double v_fr = (vx + vy + lxly * wz) / r;
   double v_rl = (vx + vy - lxly * wz) / r;
   double v_rr = (vx - vy + lxly * wz) / r;
 
-  // Scale down if any wheel exceeds max velocity
   double max_v = std::max({std::abs(v_fl), std::abs(v_fr),
                            std::abs(v_rl), std::abs(v_rr)});
   if (max_v > max_wheel_vel_) {
@@ -182,17 +143,13 @@ void MecanumDriveNode::publishWheelVelocities(double vx, double vy, double wz)
   }
 
   std_msgs::msg::Float64MultiArray msg;
-  // Order must match the forward_command_controller joints list:
-  // [front_left, front_right, rear_left, rear_right]
   msg.data = {v_fl, v_fr, v_rl, v_rr};
   wheel_vel_pub_->publish(msg);
 }
 
-// ── Odometry + TF publisher ───────────────────────────────────────────────
 void MecanumDriveNode::publishOdometry(
   double vx, double vy, double wz, const rclcpp::Time & stamp)
 {
-  // Quaternion from yaw
   tf2::Quaternion q;
   q.setRPY(0.0, 0.0, odom_yaw_);
 
@@ -210,7 +167,6 @@ void MecanumDriveNode::publishOdometry(
   odom.twist.twist.linear.y  = vy;
   odom.twist.twist.angular.z = wz;
 
-  // Diagonal covariances
   odom.pose.covariance[0]  = 0.001;
   odom.pose.covariance[7]  = 0.001;
   odom.pose.covariance[35] = 0.010;
@@ -233,9 +189,8 @@ void MecanumDriveNode::publishOdometry(
   }
 }
 
-}  // namespace mecanum_drive
+} 
 
-// ── main ──────────────────────────────────────────────────────────────────
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
