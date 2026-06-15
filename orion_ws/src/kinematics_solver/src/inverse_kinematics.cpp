@@ -100,8 +100,7 @@ void tryCandidate(
 }
 
 
-IKCandidates InverseKinematics::solveAll(const RobotModel& model,
-                                          const Position&   target) const
+IKCandidates InverseKinematics::solveAll(const RobotModel& model, const Position& target) const
 {
     if (target.size() != 3) return {};
 
@@ -178,8 +177,7 @@ IKCandidates InverseKinematics::solveAll(const RobotModel& model,
     return result;
 }
 
-JointVector InverseKinematics::solve(RobotModel& model,
-                                      Position    end_position) const
+JointVector InverseKinematics::solve(RobotModel& model, Position end_position) const
 {
     const IKCandidates candidates = solveAll(model, end_position);
     if (candidates.solutions.empty()) {
@@ -190,9 +188,7 @@ JointVector InverseKinematics::solve(RobotModel& model,
     return candidates.solutions.front();
 }
 
-bool InverseKinematics::check(RobotModel& model,
-                               Position    end_position,
-                               JointVector& q) const
+bool InverseKinematics::check(RobotModel& model, Position end_position, JointVector& q) const
 {
     if (end_position.size() != 3 || q.size() < 4) return false;
 

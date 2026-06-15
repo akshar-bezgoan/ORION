@@ -16,6 +16,16 @@ add_executable(solver
     src/inverse_kinematics.cpp
     src/forward_kinematics.cpp
     src/robot_model.cpp
+    src/trajectory_optimiser.cpp
+)
+
+add_executable(unit_test
+    src/unit_test.cpp
+    src/inverse_kinematics.cpp
+    src/forward_kinematics.cpp
+    src/robot_model.cpp
+    src/trajectory_optimiser.cpp
 )
 
 target_link_libraries(solver Eigen3::Eigen)
+target_link_libraries(unit_test Eigen3::Eigen)

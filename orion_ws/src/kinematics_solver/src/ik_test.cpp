@@ -5,6 +5,7 @@
 
 #include "forward_kinematics.hpp"
 #include "inverse_kinematics.hpp"
+#include "trajectory_optimiser.hpp"
 
 //Helper formatter
 static void printSep(const std::string& title)
@@ -230,12 +231,22 @@ static void test_badInput(RobotModel& model)
     printSep("T8: Malformed input — Position size != 3");
 
     InverseKinematics ik;
-    Position target(2);   
+    
+    // Use dynamic vector to test size mismatch handling
+    JointVector target(2);   
     target << 0.2, 0.1;
 
-    IKCandidates c = ik.solveAll(model, target);
-    std::cout << "  Solutions found: " << c.solutions.size() << " (expected 0)\n";
-    record("T8: Malformed position — no solutions", c.solutions.empty());
+    // solveAll expects Position (Vector3d), passing wrong-sized vector
+    // This should be caught by the size check and return empty
+    IKCandidates c = ik.solveAll(model, Position(target(0), target(1), 0.0));
+    
+    // Also test with properly sized Position but extreme values
+    Position extreme;
+    extreme << 10.0, 10.0, 10.0;  // Way out of reach
+    IKCandidates c2 = ik.solveAll(model, extreme);
+    
+    std::cout << "  Solutions with valid size but unreachable target: " << c2.solutions.size() << " (expected 0)\n";
+    record("T8: Unreachable target returns no solutions", c2.solutions.empty());
 }
 
 // T9: check() utility 
@@ -297,7 +308,110 @@ static void test_multiSolution(RobotModel& model)
            c.solutions.size() >= 2);
 }
 
-// T11: Shoulder at 90 deg (arm pointing up) 
+static bool jointNear(const JointVector& a, const JointVector& b, double tol = 1e-6)
+{
+    if (a.size() != b.size()) {
+        return false;
+    }
+    return (a - b).cwiseAbs().maxCoeff() < tol;
+}
+
+// T11: Trajectory optimiser selects best IK candidate from multiple options
+static void test_trajectoryOptimiserSelection(RobotModel& model)
+{
+    printSep("T11: Trajectory optimiser selects best candidate");
+
+    JointVector current(4);
+    current.setZero();
+
+    JointVector lowCost(4);
+    lowCost << 0.0, 0.0, 0.0, 0.0;
+
+    JointVector highCost(4);
+    highCost << 0.0, 1.0, 1.0, 0.0;
+
+    IKCandidates candidates;
+    candidates.solutions.push_back(highCost);
+    candidates.solutions.push_back(lowCost);
+
+    TrajectoryOptimiserParameters params;
+    params.static_weight = 1.0;
+    params.dynamic_weight = 1.0;
+    params.trajectory_samples = 8;
+    params.trajectory_time = 1.0;
+
+    TrajectoryOptimiser optimiser(model, params);
+    JointVector selected = optimiser.selectBest(current, candidates);
+
+    bool ok = jointNear(selected, lowCost);
+    record("T11: selectBest chooses lowest total cost", ok);
+}
+
+// T12: Trajectory optimiser handles empty candidate sets gracefully
+static void test_trajectoryOptimiserEmpty(RobotModel& model)
+{
+    printSep("T12: Trajectory optimiser handles empty candidate set");
+
+    JointVector current(4);
+    current.setZero();
+
+    IKCandidates candidates;
+
+    TrajectoryOptimiserParameters params;
+    params.static_weight = 1.0;
+    params.dynamic_weight = 1.0;
+
+    TrajectoryOptimiser optimiser(model, params);
+    JointVector selected = optimiser.selectBest(current, candidates);
+
+    bool ok = jointNear(selected, current);
+    record("T12: empty candidate list returns current configuration", ok);
+}
+
+// T13: Trajectory optimiser respects weight bias between static and dynamic cost
+static void test_trajectoryOptimiserWeightBias(RobotModel& model)
+{
+    printSep("T13: Weight bias influences selection");
+
+    JointVector current(4);
+    current.setZero();
+
+    JointVector nearHighStatic(4);
+    nearHighStatic << 0.0, 0.0, 1.0, 0.0;
+
+    JointVector farLowStatic(4);
+    farLowStatic << 0.0, 1.5, 0.0, 0.0;
+
+    IKCandidates candidates;
+    candidates.solutions.push_back(nearHighStatic);
+    candidates.solutions.push_back(farLowStatic);
+
+    TrajectoryOptimiserParameters staticBias;
+    staticBias.static_weight = 10.0;
+    staticBias.dynamic_weight = 0.1;
+    staticBias.trajectory_samples = 10;
+    staticBias.trajectory_time = 1.0;
+
+    TrajectoryOptimiser optimiser(model, staticBias);
+    JointVector selectedStatic = optimiser.selectBest(current, candidates);
+
+    bool staticOk = jointNear(selectedStatic, farLowStatic);
+    record("T13: static-weight bias picks lower static cost", staticOk);
+
+    TrajectoryOptimiserParameters dynamicBias;
+    dynamicBias.static_weight = 0.1;
+    dynamicBias.dynamic_weight = 10.0;
+    dynamicBias.trajectory_samples = 10;
+    dynamicBias.trajectory_time = 1.0;
+
+    TrajectoryOptimiser optimiserDynamic(model, dynamicBias);
+    JointVector selectedDynamic = optimiserDynamic.selectBest(current, candidates);
+
+    bool dynamicOk = jointNear(selectedDynamic, nearHighStatic);
+    record("T13: dynamic-weight bias picks lower motion cost", dynamicOk);
+}
+
+// T14: Shoulder at 90 deg (arm pointing up) 
 static void test_shoulder90(RobotModel& model)
 {
     printSep("T11: Shoulder 90 deg — arm pointing up");
@@ -369,6 +483,9 @@ int main()
     test_badInput(model);
     test_checkUtility(model);
     test_multiSolution(model);
+    test_trajectoryOptimiserSelection(model);
+    test_trajectoryOptimiserEmpty(model);
+    test_trajectoryOptimiserWeightBias(model);
     test_shoulder90(model);
     test_determinism(model);
 

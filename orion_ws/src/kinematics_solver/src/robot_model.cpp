@@ -16,11 +16,11 @@ RobotModel::RobotModel()
 
     joint_limits_.resize(DOF);
 
-    // Joint limits — all already match xacro (lines 85-98)
-    joint_limits_[0] = {-0.73, 1.30};  // shoulder  (xacro: shoulder_lo/hi)
-    joint_limits_[1] = {-0.25, 0.57};  // elbow     (xacro: elbow_lo/hi)
+    // Joint limits — from orion.xacro (lines 50-57)
+    joint_limits_[0] = {-1.58, 0.79};  // shoulder  (xacro: shoulder_lo/hi)
+    joint_limits_[1] = {-0.25, 1.57};  // elbow     (xacro: elbow_lo/hi)
     joint_limits_[2] = { 0.00, 2.70};  // wrist     (xacro: wrist_lo/hi)
-    joint_limits_[3] = {-1.00, 1.00};  // wrist roll (xacro: gr_lo/hi ±1.57; kept as-is — no exact match)
+    joint_limits_[3] = {-1.57, 1.57};  // wrist roll (xacro: gr_lo/hi)
 }
 
 int RobotModel::getDOF() const {
