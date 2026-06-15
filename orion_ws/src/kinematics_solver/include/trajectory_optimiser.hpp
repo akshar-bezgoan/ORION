@@ -8,12 +8,6 @@ struct IKSolution {
     JointVector joints;
 };
 
-struct TrajectoryOptimiserParameters {
-    double static_weight = 1.0;
-    double dynamic_weight = 1.0;
-    int trajectory_samples = 10;
-    double trajectory_time = 1.0;
-};
 
 class StaticCostEvaluator {
 public:
@@ -53,6 +47,7 @@ public:
                                  const TrajectoryOptimiserParameters& params = {});
     JointVector selectBest(const JointVector& current,
                            const IKCandidates& candidates) const;
+    JointVector selectLowestTorque(const IKCandidates& candidates) const;
 
 private:
     const RobotModel& model_;

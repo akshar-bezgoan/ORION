@@ -3,8 +3,8 @@
 #include <Eigen/Dense>
 #include <vector>
 
-class ForwardKinematics; // forward declare so friend compiles
-class InverseKinematics; // forward declare so friend compiles
+class ForwardKinematics;
+class InverseKinematics; 
 
 class RobotModel {
 public:
@@ -15,15 +15,15 @@ public:
     bool isWithinLimits(const Eigen::Vector4d& q) const;
 
     int getDOF() const;
+    double getLinkLength(int idx) const;
+    double getLinkMass(int idx) const;
 
 private:
-    // Lengths (m)
     double shoulder_h_;
     double upper_arm_l_;
     double forearm_l_;
     double gripper_l_;
 
-    // Masses (kg)
     double shoulder_m_;
     double upper_arm_m_;
     double forearm_m_;
@@ -34,7 +34,7 @@ private:
         double max;
     };
 
-    std::vector<JointLimit> joint_limits_; // size = DOF
+    std::vector<JointLimit> joint_limits_;
 
     friend class ForwardKinematics;
     friend class InverseKinematics;

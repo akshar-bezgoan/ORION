@@ -2,29 +2,48 @@
 
 RobotModel::RobotModel()
 {
-    //Link lengths — values match orion.xacro properties (lines 66-69)
-    shoulder_h_   = 0.050;  // xacro: shoulder_h   (was 0.090)
-    upper_arm_l_  = 0.220;  // xacro: upper_arm_l  (was 0.145)
-    forearm_l_    = 0.145;  // xacro: forearm_l     (unchanged)
-    gripper_l_    = 0.055;  // xacro: gripper_l     (was 0.060)
+    shoulder_h_   = 0.050;  
+    upper_arm_l_  = 0.220;  
+    forearm_l_    = 0.145;  
+    gripper_l_    = 0.055;  
 
-    //Masses — all already match xacro (lines 79-82)
-    shoulder_m_   = 0.300;  // xacro: m_shoulder
-    upper_arm_m_  = 0.308;  // xacro: m_upper_arm
-    forearm_m_    = 0.199;  // xacro: m_forearm
-    gripper_m_    = 0.120;  // xacro: m_gripper
+    
+    shoulder_m_   = 0.300;  
+    upper_arm_m_  = 0.308;  
+    forearm_m_    = 0.199;  
+    gripper_m_    = 0.120;  
 
     joint_limits_.resize(DOF);
 
-    // Joint limits — from orion.xacro (lines 50-57)
-    joint_limits_[0] = {-1.58, 0.79};  // shoulder  (xacro: shoulder_lo/hi)
-    joint_limits_[1] = {-0.25, 1.57};  // elbow     (xacro: elbow_lo/hi)
-    joint_limits_[2] = { 0.00, 2.70};  // wrist     (xacro: wrist_lo/hi)
-    joint_limits_[3] = {-1.57, 1.57};  // wrist roll (xacro: gr_lo/hi)
+    
+    joint_limits_[0] = {-1.58, 0.79};
+    joint_limits_[1] = {-0.25, 1.57};  
+    joint_limits_[2] = { 0.00, 2.70};  
+    joint_limits_[3] = {-1.57, 1.57}; 
 }
 
 int RobotModel::getDOF() const {
     return DOF;
+}
+
+double RobotModel::getLinkLength(int idx) const {
+    switch (idx) {
+        case 0: return shoulder_h_;
+        case 1: return upper_arm_l_;
+        case 2: return forearm_l_;
+        case 3: return gripper_l_;
+        default: return 0.0;
+    }
+}
+
+double RobotModel::getLinkMass(int idx) const {
+    switch (idx) {
+        case 0: return shoulder_m_;
+        case 1: return upper_arm_m_;
+        case 2: return forearm_m_;
+        case 3: return gripper_m_;
+        default: return 0.0;
+    }
 }
 
 bool RobotModel::isWithinLimits(const Eigen::Vector4d& q) const {
