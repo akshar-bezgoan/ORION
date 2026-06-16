@@ -15,10 +15,11 @@ The core control system implemented in C++ for real-time performance.
 *   **`mecanum_drive`**: Implementation of mecanum wheel kinematics for the mobile base, subscribing to `/cmd_vel` to drive the platform.
 *   **`orion_description`**: Physical robot model definitions including URDF, Xacro, and Gazebo configurations.
 
-### 2. Simulation (Python Simulator)
-A standalone Python application for rapid experimentation and visualization of planar kinematics.
+### 2. Simulation (Cross-Platform Simulators)
+Tools for rapid experimentation and visualization of kinematics.
 
 *   **FK/IK GUI**: Interactive Tkinter interface for visualizing joint configurations.
+*   **C++ SFML Sim**: High-performance interactive visualizer linking directly to the C++ kinematics solver.
 *   **Numerical & Jacobian Solvers**: Reference implementations of optimization-based IK (SciPy) and Jacobian-based iterative methods.
 
 ## 🚀 Key Features
@@ -47,7 +48,8 @@ To verify the kinematics pipeline (IK -> Optimization -> PWM):
 ./build/kinematics_solver/unit_test 0.25 0.10 0.15
 ```
 
-### Running the Simulator
+### Running the Simulators
+**Python Version:**
 ```bash
 cd Simulation
 python main.py

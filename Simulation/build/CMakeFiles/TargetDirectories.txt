@@ -1,0 +1,3 @@
+/Users/aksharbezgoan/Documents/Computing/ORION/Simulation/build/CMakeFiles/gui_sim.dir
+/Users/aksharbezgoan/Documents/Computing/ORION/Simulation/build/CMakeFiles/edit_cache.dir
+/Users/aksharbezgoan/Documents/Computing/ORION/Simulation/build/CMakeFiles/rebuild_cache.dir
