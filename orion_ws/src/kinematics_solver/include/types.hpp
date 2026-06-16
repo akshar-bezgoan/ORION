@@ -24,3 +24,12 @@ struct TrajectoryOptimiserParameters {
     int trajectory_samples = 1000;
     double trajectory_time = 1.0;
 };
+
+struct MinimumJerkCoefficients {
+    JointVector a0;
+    JointVector a1;
+    JointVector a2;
+    JointVector a3;
+    JointVector a4;
+    JointVector a5;
+};

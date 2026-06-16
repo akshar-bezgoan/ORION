@@ -5,35 +5,26 @@
 
 #include <vector>
 
-struct MinimumJerkCoefficients {
-    JointVector a0;
-    JointVector a1;
-    JointVector a2;
-    JointVector a3;
-    JointVector a4;
-    JointVector a5;
-};
+MinimumJerkCoefficients getMJCoeff(const JointVector& start,
+                                   const JointVector& goal,
+                                   double duration);
 
-MinimumJerkCoefficients computeMinimumJerkCoefficients(const JointVector& start,
-                                                       const JointVector& goal,
-                                                       double duration);
+JointVector evalMJPos(const MinimumJerkCoefficients& coef,
+                      double t);
 
-JointVector evaluateMinimumJerkPosition(const MinimumJerkCoefficients& coeffs,
-                                        double time);
+JointVector evalMJAccel(const MinimumJerkCoefficients& coef,
+                        double t);
 
-JointVector evaluateMinimumJerkAcceleration(const MinimumJerkCoefficients& coeffs,
-                                            double time);
+std::vector<JointVector> genMJProfile(const JointVector& start,
+                                       const JointVector& goal,
+                                       double duration,
+                                       int samples);
 
-std::vector<JointVector> generateMinimumJerkAccelerationProfile(const JointVector& start,
-                                                                 const JointVector& goal,
-                                                                 double duration,
-                                                                 int samples);
+JointVector calcTau(const RobotModel& model,
+                    const JointVector& accel);
 
-JointVector computeTorque(const RobotModel& model,
-                          const JointVector& acceleration);
-
-std::vector<JointVector> generateTorqueProfile(const RobotModel& model,
-                                               const JointVector& start,
-                                               const JointVector& goal,
-                                               double duration,
-                                               int samples);
+std::vector<JointVector> genTauProfile(const RobotModel& model,
+                                        const JointVector& start,
+                                        const JointVector& goal,
+                                        double duration,
+                                        int samples);

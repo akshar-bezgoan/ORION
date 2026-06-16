@@ -35,9 +35,9 @@ static void test_positionBoundary()
     JointVector goal(5);
     goal << 0.1, 0.2, -0.1, 0.5, 1.0;
 
-    MinimumJerkCoefficients coeffs = computeMinimumJerkCoefficients(start, goal, 1.0);
-    JointVector atStart = evaluateMinimumJerkPosition(coeffs, 0.0);
-    JointVector atEnd = evaluateMinimumJerkPosition(coeffs, 1.0);
+    MinimumJerkCoefficients coef = getMJCoeff(start, goal, 1.0);
+    JointVector atStart = evalMJPos(coef, 0.0);
+    JointVector atEnd = evalMJPos(coef, 1.0);
 
     bool ok = near(atStart, start) && near(atEnd, goal);
     record("start and end positions match", ok);
@@ -51,9 +51,9 @@ static void test_accelerationBoundary()
     JointVector goal(5);
     goal << -0.4, 0.6, 0.2, -0.7, 0.8;
 
-    MinimumJerkCoefficients coeffs = computeMinimumJerkCoefficients(start, goal, 2.0);
-    JointVector atStart = evaluateMinimumJerkAcceleration(coeffs, 0.0);
-    JointVector atEnd = evaluateMinimumJerkAcceleration(coeffs, 2.0);
+    MinimumJerkCoefficients coef = getMJCoeff(start, goal, 2.0);
+    JointVector atStart = evalMJAccel(coef, 0.0);
+    JointVector atEnd = evalMJAccel(coef, 2.0);
 
     bool ok = near(atStart, JointVector::Zero(5)) && near(atEnd, JointVector::Zero(5));
     record("accelerations start and end at zero", ok);
@@ -68,8 +68,8 @@ static void test_torqueBoundary()
     JointVector goal(5);
     goal << 0.3, -0.3, 0.1, 0.2, 0.5;
 
-    std::vector<JointVector> torqueProfile = generateTorqueProfile(model, start, goal, 1.0, 20);
-    bool ok = near(torqueProfile.front(), JointVector::Zero(5)) && near(torqueProfile.back(), JointVector::Zero(5));
+    std::vector<JointVector> torque_prof = genTauProfile(model, start, goal, 1.0, 20);
+    bool ok = near(torque_prof.front(), JointVector::Zero(5)) && near(torque_prof.back(), JointVector::Zero(5));
     record("torque profile begins and ends at zero", ok);
 }
 
@@ -82,10 +82,10 @@ static void test_extraJointTorqueZero()
     JointVector goal(5);
     goal << 0.5, 0.0, 0.0, 0.0, 1.0;
 
-    std::vector<JointVector> torqueProfile = generateTorqueProfile(model, start, goal, 1.0, 10);
+    std::vector<JointVector> torque_prof = genTauProfile(model, start, goal, 1.0, 10);
     bool ok = true;
-    for (const auto& torque : torqueProfile) {
-        if (std::abs(torque(4)) > 1e-9) {
+    for (const auto& tau : torque_prof) {
+        if (std::abs(tau(4)) > 1e-9) {
             ok = false;
             break;
         }

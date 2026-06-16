@@ -1,22 +1,23 @@
 #include "pwm_output.hpp"
+#include "types.hpp"
 
 #include <cmath>
 #include <algorithm>
 
-MinimumJerkCoefficients computeMinimumJerkCoefficients(const JointVector& start,
-                                                       const JointVector& goal,
-                                                       double duration)
+MinimumJerkCoefficients getMJCoeff(const JointVector& start,
+                                   const JointVector& goal,
+                                   double duration)
 {
     const int dof = static_cast<int>(start.size());
-    MinimumJerkCoefficients coeffs;
-    coeffs.a0 = start;
-    coeffs.a1 = JointVector::Zero(dof);
-    coeffs.a2 = JointVector::Zero(dof);
-    coeffs.a3 = JointVector::Zero(dof);
-    coeffs.a4 = JointVector::Zero(dof);
-    coeffs.a5 = JointVector::Zero(dof);
+    MinimumJerkCoefficients coef;
+    coef.a0 = start;
+    coef.a1 = JointVector::Zero(dof);
+    coef.a2 = JointVector::Zero(dof);
+    coef.a3 = JointVector::Zero(dof);
+    coef.a4 = JointVector::Zero(dof);
+    coef.a5 = JointVector::Zero(dof);
 
-    const double T = std::max(duration, 1e-6);
+    const double T = std::max(duration, 1e-6);  // Duration
     const double T2 = T * T;
     const double T3 = T2 * T;
     const double T4 = T3 * T;
@@ -24,108 +25,106 @@ MinimumJerkCoefficients computeMinimumJerkCoefficients(const JointVector& start,
 
     for (int i = 0; i < dof; ++i) {
         const double dq = goal[i] - start[i];
-        coeffs.a3[i] = 10.0 * dq / T3;
-        coeffs.a4[i] = -15.0 * dq / T4;
-        coeffs.a5[i] = 6.0 * dq / T5;
+        coef.a3[i] = 10.0 * dq / T3;
+        coef.a4[i] = -15.0 * dq / T4;
+        coef.a5[i] = 6.0 * dq / T5;
     }
 
-    return coeffs;
+    return coef;
 }
 
-JointVector evaluateMinimumJerkPosition(const MinimumJerkCoefficients& coeffs,
-                                        double time)
+JointVector evalMJPos(const MinimumJerkCoefficients& coef,
+                      double t)
 {
-    const int dof = static_cast<int>(coeffs.a0.size());
-    JointVector position = coeffs.a0;
-    const double t = time;
+    const int dof = static_cast<int>(coef.a0.size());
+    JointVector pos = coef.a0;
     const double t2 = t * t;
     const double t3 = t2 * t;
     const double t4 = t3 * t;
     const double t5 = t4 * t;
 
-    position += coeffs.a1 * t;
-    position += coeffs.a2 * t2;
-    position += coeffs.a3 * t3;
-    position += coeffs.a4 * t4;
-    position += coeffs.a5 * t5;
+    pos += coef.a1 * t;
+    pos += coef.a2 * t2;
+    pos += coef.a3 * t3;
+    pos += coef.a4 * t4;
+    pos += coef.a5 * t5;
 
-    return position;
+    return pos;
 }
 
-JointVector evaluateMinimumJerkAcceleration(const MinimumJerkCoefficients& coeffs,
-                                            double time)
+JointVector evalMJAccel(const MinimumJerkCoefficients& coef,
+                        double t)
 {
-    const int dof = static_cast<int>(coeffs.a0.size());
-    JointVector acceleration = JointVector::Zero(dof);
-    const double t = time;
+    const int dof = static_cast<int>(coef.a0.size());
+    JointVector accel = JointVector::Zero(dof);
     const double t2 = t * t;
 
-    acceleration += coeffs.a2 * 2.0;
-    acceleration += coeffs.a3 * (6.0 * t);
-    acceleration += coeffs.a4 * (12.0 * t2);
-    acceleration += coeffs.a5 * (20.0 * t2 * t);
+    accel += coef.a2 * 2.0;
+    accel += coef.a3 * (6.0 * t);
+    accel += coef.a4 * (12.0 * t2);
+    accel += coef.a5 * (20.0 * t2 * t);
 
-    return acceleration;
+    return accel;
 }
 
-std::vector<JointVector> generateMinimumJerkAccelerationProfile(const JointVector& start,
-                                                                 const JointVector& goal,
-                                                                 double duration,
-                                                                 int samples)
+// Generate minimum jerk acceleration profile
+std::vector<JointVector> genMJProfile(const JointVector& start,
+                                       const JointVector& goal,
+                                       double duration,
+                                       int samples)
 {
-    const int sampleCount = std::max(2, samples);
-    std::vector<JointVector> profile;
-    profile.reserve(sampleCount);
+    const int n = std::max(2, samples);  // num samples
+    std::vector<JointVector> prof;
+    prof.reserve(n);
 
-    MinimumJerkCoefficients coeffs = computeMinimumJerkCoefficients(start, goal, duration);
-    const double dt = duration / static_cast<double>(sampleCount - 1);
+    MinimumJerkCoefficients coef = getMJCoeff(start, goal, duration);
+    const double dt = duration / static_cast<double>(n - 1);
 
-    for (int sample = 0; sample < sampleCount; ++sample) {
-        const double time = sample * dt;
-        profile.push_back(evaluateMinimumJerkAcceleration(coeffs, time));
+    for (int i = 0; i < n; ++i) {
+        prof.push_back(evalMJAccel(coef, i * dt));
     }
 
-    return profile;
+    return prof;
 }
 
-JointVector computeTorque(const RobotModel& model,
-                          const JointVector& acceleration)
+JointVector calcTau(const RobotModel& model,
+                    const JointVector& accel)
 {
-    const int dof = static_cast<int>(acceleration.size());
-    JointVector torque = JointVector::Zero(dof);
-    const int modelDOF = model.getDOF();
+    const int dof = static_cast<int>(accel.size());
+    JointVector tau = JointVector::Zero(dof);
+    const int n_dof = model.getDOF();
 
-    for (int joint = 0; joint < dof; ++joint) {
-        if (joint >= modelDOF) {
-            torque[joint] = 0.0;
+    for (int j = 0; j < dof; ++j) {
+        if (j >= n_dof) {
+            tau[j] = 0.0;
             continue;
         }
 
-        double torqueProxy = 0.0;
-        for (int link = joint; link < modelDOF; ++link) {
-            const double mass = model.getLinkMass(link);
-            const double length = model.getLinkLength(link);
-            torqueProxy += std::abs(acceleration[joint]) * mass * length;
+        double sum = 0.0;  // Torque accumulator
+        for (int k = j; k < n_dof; ++k) {
+            const double m = model.getLinkMass(k);
+            const double l = model.getLinkLength(k);
+            sum += std::abs(accel[j]) * m * l;
         }
-        torque[joint] = torqueProxy;
+        tau[j] = sum;
     }
 
-    return torque;
+    return tau;
 }
 
-std::vector<JointVector> generateTorqueProfile(const RobotModel& model,
-                                               const JointVector& start,
-                                               const JointVector& goal,
-                                               double duration,
-                                               int samples)
+std::vector<JointVector> genTauProfile(const RobotModel& model,
+                                        const JointVector& start,
+                                        const JointVector& goal,
+                                        double duration,
+                                        int samples)
 {
-    const std::vector<JointVector> accelerations = generateMinimumJerkAccelerationProfile(start, goal, duration, samples);
-    std::vector<JointVector> torqueProfile;
-    torqueProfile.reserve(accelerations.size());
+    const std::vector<JointVector> accels = genMJProfile(start, goal, duration, samples);
+    std::vector<JointVector> tau_prof;
+    tau_prof.reserve(accels.size());
 
-    for (const JointVector& acceleration : accelerations) {
-        torqueProfile.push_back(computeTorque(model, acceleration));
+    for (const JointVector& a : accels) {
+        tau_prof.push_back(calcTau(model, a));
     }
 
-    return torqueProfile;
+    return tau_prof;
 }
