@@ -16,3 +16,5 @@ orion_ws/.roslog/
 # kinematics_solver build files
 orion_ws/src/kinematics_solver/build/
 
+# Simulation build files
+Simulation/build/
